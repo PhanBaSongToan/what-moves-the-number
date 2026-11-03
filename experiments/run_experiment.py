@@ -98,7 +98,12 @@ def encode_split(
     tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=False)
     encoded = {}
     for name, frame in frames.items():
-        texts = [build_text(row, text_mode) for _, row in frame.iterrows()]
+        if text_mode == "fusion":
+            texts = frame["comment"].astype(str).tolist()
+            descriptions = frame["description"].fillna("").astype(str).tolist()
+        else:
+            texts = [build_text(row, text_mode) for _, row in frame.iterrows()]
+            descriptions = None
         batch = tokenizer(texts, truncation=True, max_length=max_len)
         encoded[name] = {
             "input_ids": batch["input_ids"],
@@ -107,6 +112,13 @@ def encode_split(
             "binary_label": frame["label"].astype(int).tolist(),
             "comment": frame["comment"].astype(str).tolist(),
         }
+        if descriptions is not None:
+            encoded[name]["desc_input_ids"] = tokenizer(
+                descriptions, truncation=True, max_length=max_len
+            )["input_ids"]
+            encoded[name]["desc_mask"] = tokenizer(
+                descriptions, truncation=True, max_length=max_len
+            )["attention_mask"]
     _TOKEN_CACHE[key] = encoded
     return encoded
 
@@ -134,6 +146,8 @@ class ReviewDataset(Dataset):
     def __init__(self, split_data: dict, task: int):
         self.ids = split_data["input_ids"]
         self.mask = split_data["attention_mask"]
+        self.desc_ids = split_data.get("desc_input_ids")
+        self.desc_mask = split_data.get("desc_mask")
         if task == 1:
             self.labels = split_data["binary_label"]
             self.binary = self.labels
@@ -147,13 +161,17 @@ class ReviewDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, index: int):
-        return {
+        item = {
             "input_ids": self.ids[index],
             "attention_mask": self.mask[index],
             "labels": self.labels[index],
             "binary": self.binary[index],
             "spam_type": self.spam_type[index],
         }
+        if self.desc_ids is not None:
+            item["desc_input_ids"] = self.desc_ids[index]
+            item["desc_mask"] = self.desc_mask[index]
+        return item
 
 
 def collate(batch: list[dict]) -> dict[str, torch.Tensor]:
@@ -165,13 +183,24 @@ def collate(batch: list[dict]) -> dict[str, torch.Tensor]:
         length = len(item["input_ids"])
         ids[row, :length] = torch.tensor(item["input_ids"], dtype=torch.long)
         mask[row, :length] = torch.tensor(item["attention_mask"], dtype=torch.long)
-    return {
+    collated = {
         "input_ids": ids,
         "attention_mask": mask,
         "labels": torch.tensor([item["labels"] for item in batch], dtype=torch.long),
         "binary": torch.tensor([item["binary"] for item in batch], dtype=torch.long),
         "spam_type": torch.tensor([item["spam_type"] for item in batch], dtype=torch.long),
     }
+    if "desc_input_ids" in batch[0]:
+        desc_width = ((max(len(item["desc_input_ids"]) for item in batch) + PAD_TO - 1) // PAD_TO) * PAD_TO
+        desc_ids = torch.zeros(len(batch), desc_width, dtype=torch.long)
+        desc_mask = torch.zeros(len(batch), desc_width, dtype=torch.long)
+        for row, item in enumerate(batch):
+            length = len(item["desc_input_ids"])
+            desc_ids[row, :length] = torch.tensor(item["desc_input_ids"], dtype=torch.long)
+            desc_mask[row, :length] = torch.tensor(item["desc_mask"], dtype=torch.long)
+        collated["desc_input_ids"] = desc_ids
+        collated["desc_mask"] = desc_mask
+    return collated
 
 
 # --------------------------------------------------------------------------- models
@@ -186,6 +215,25 @@ class MultiTaskPhoBERT(nn.Module):
     def forward(self, input_ids, attention_mask):
         hidden = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state[:, 0]
         return self.binary_head(hidden), self.type_head(hidden)
+
+
+class FusionPhoBERT(nn.Module):
+    """Shared encoder, description encoded separately and concatenated to the review vector."""
+
+    def __init__(self, dropout: float = 0.2, backbone: str = CHECKPOINT):
+        super().__init__()
+        self.encoder = AutoModel.from_pretrained(backbone)
+        hidden = self.encoder.config.hidden_size
+        self.head = nn.Sequential(nn.Dropout(dropout), nn.Linear(2 * hidden, 4))
+
+    def forward(self, input_ids, attention_mask, desc_input_ids=None, desc_mask=None):
+        comment = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state[:, 0]
+        description = self.encoder(
+            input_ids=desc_input_ids, attention_mask=desc_mask
+        ).last_hidden_state
+        weight = desc_mask.unsqueeze(-1).float()
+        pooled = (description * weight).sum(dim=1) / weight.sum(dim=1).clamp(min=1e-6)
+        return self.head(torch.cat([comment, pooled], dim=1))
 
 
 def combined(binary_logits: torch.Tensor, type_logits: torch.Tensor) -> torch.Tensor:
@@ -233,11 +281,13 @@ def set_seed(seed: int) -> None:
 
 
 def build_optimizer(model: nn.Module, cfg: Config, method: str) -> torch.optim.Optimizer:
-    if method == "multitask":
-        head_named = list(model.binary_head.named_parameters()) + list(model.type_head.named_parameters())
-        head_ids = {id(p) for _, p in head_named}
+    if method in ("multitask", "fusion"):
         encoder = [p for p in model.encoder.parameters()]
-        heads = [p for _, p in head_named]
+        encoder_ids = {id(p) for p in encoder}
+        heads = [p for p in model.parameters() if id(p) not in encoder_ids]
+        if method == "multitask":
+            head_named = list(model.binary_head.named_parameters()) + list(model.type_head.named_parameters())
+            heads = [p for _, p in head_named]
     else:
         head_ids = {id(p) for n, p in model.named_parameters() if n.startswith(("classifier", "pooler"))}
         encoder = [p for n, p in model.named_parameters() if id(p) not in head_ids]
@@ -260,9 +310,14 @@ def evaluate(model, loader, device, task: int, method: str, precision: str = "bf
     for batch in loader:
         labels = batch["labels"].to(device)
         inputs = {k: batch[k].to(device) for k in ("input_ids", "attention_mask")}
+        if "desc_input_ids" in batch:
+            inputs["desc_input_ids"] = batch["desc_input_ids"].to(device)
+            inputs["desc_mask"] = batch["desc_mask"].to(device)
         with autocast(use_amp):
             if method == "multitask":
                 binary_logits, type_logits = model(**inputs)
+            elif method == "fusion":
+                logits = model(**inputs)
             else:
                 logits = model(**inputs).logits
         if method == "multitask":
@@ -350,6 +405,8 @@ def run(cfg: Config) -> dict:
 
     if cfg.method == "multitask":
         model = MultiTaskPhoBERT(cfg.dropout, cfg.backbone).to(device)
+    elif cfg.method == "fusion":
+        model = FusionPhoBERT(cfg.dropout, cfg.backbone).to(device)
     else:
         num_labels = 2 if cfg.task == 1 else 4
         model = AutoModelForSequenceClassification.from_pretrained(
@@ -405,6 +462,14 @@ def run(cfg: Config) -> dict:
                     loss = ce(binary_logits.float(), binary_y)
                     if mask.any():
                         loss = loss + type_ce(type_logits.float()[mask], batch_gpu["spam_type"][mask])
+                elif cfg.method == "fusion":
+                    logits = model(
+                        input_ids=batch_gpu["input_ids"],
+                        attention_mask=batch_gpu["attention_mask"],
+                        desc_input_ids=batch_gpu["desc_input_ids"],
+                        desc_mask=batch_gpu["desc_mask"],
+                    )
+                    loss = ce(logits.float(), batch_gpu["labels"])
                 else:
                     logits = model(
                         input_ids=batch_gpu["input_ids"],

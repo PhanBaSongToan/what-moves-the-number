@@ -3,7 +3,12 @@
     "t1_single_s42",
     "t1_single_s43",
     "t1_single_s44",
+    "t2_fusion_s42",
+    "t2_fusion_s43",
+    "t2_fusion_s44",
     "t2_multitask_dedup_s42",
+    "t2_multitask_dedup_s43",
+    "t2_multitask_dedup_s44",
     "t2_multitask_disjoint_s42",
     "t2_multitask_disjoint_s43",
     "t2_multitask_disjoint_s44",
@@ -12,6 +17,8 @@
     "t2_multitask_s44",
     "t2_multitask_weighted_s42",
     "t2_single_dedup_s42",
+    "t2_single_dedup_s43",
+    "t2_single_dedup_s44",
     "t2_single_disjoint_s42",
     "t2_single_disjoint_s43",
     "t2_single_disjoint_s44",
@@ -23,7 +30,7 @@
     "t2_single_xlmr_s42"
   ],
   "state": {
-    "run_minutes": 10.046591941515604,
+    "run_minutes": 9.89831198255221,
     "single": {
       "acc": 0.9089079013588325,
       "acc_sd": 0.003061279582434947,
@@ -73,20 +80,39 @@
       "f1": 0.753531829896724
     },
     "dedupe_single": {
-      "acc": 0.9023653749370911,
-      "f1": 0.7347912290929735
+      "acc": 0.9014427109545379,
+      "f1": 0.7472085789854029,
+      "n": 3
     },
     "dedupe_multi": {
-      "acc": 0.9066431806743835,
-      "f1": 0.7714930797862896
+      "acc": 0.9074819661130683,
+      "f1": 0.770206173692268,
+      "n": 3
     },
     "xlmr": {
       "acc": 0.908656265727227,
-      "f1": 0.7642460736299798
+      "f1": 0.7642460736299798,
+      "n": 1
     },
     "len128": {
       "acc": 0.912179164569703,
-      "f1": 0.7616760811279865
+      "f1": 0.7616760811279865,
+      "n": 1
+    },
+    "fusion": {
+      "acc": 0.9085723871833585,
+      "f1": 0.7597764452082719,
+      "n": 3
+    },
+    "lr_single": {
+      "acc": 0.0,
+      "f1": 0.0,
+      "n": 0
+    },
+    "lr_multi": {
+      "acc": 0.0,
+      "f1": 0.0,
+      "n": 0
     },
     "dedupe_removed": 47,
     "weighted": {

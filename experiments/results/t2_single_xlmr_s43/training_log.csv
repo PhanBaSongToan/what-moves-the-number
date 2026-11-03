@@ -1,0 +1,2 @@
+epoch,train_loss,dev_loss,dev_accuracy,dev_macro_f1,seconds
+1,0.470072,0.338043,0.894340,0.575453,530.7

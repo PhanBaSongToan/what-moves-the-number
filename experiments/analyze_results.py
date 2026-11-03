@@ -348,36 +348,65 @@ def write_gate_table(state: dict) -> None:
 def write_controls_table(state: dict, runs: dict) -> None:
     """Controls that address the remaining validity concerns."""
 
-    def row(label: str, metrics: dict, reference: dict, indent: bool = False) -> str:
-        delta = 100 * (metrics["f1"] - reference["f1"])
-        prefix = "\\quad " if indent else ""
+    single_ref = state["single"]["f1"]
+    multi_ref = state["multi"]["f1"]
+
+    def row(label: str, prefix: str, reference: float) -> str | None:
+        try:
+            agg = aggregate(runs, prefix)
+        except KeyError:
+            return None
+        mean = agg["f1"]["mean"]
+        delta = 100 * (mean - reference)
         return (
-            f"{prefix}{label} & {pct(metrics['acc'])} & {pct(metrics['f1'])} & {delta:+.2f} \\\\"
+            f"{label} & {agg['acc']['n']} & {plus_minus(agg['acc']['mean'], agg['acc']['sd'])} & "
+            f"{plus_minus(mean, agg['f1']['sd'])} & {delta:+.2f} \\\\"
         )
 
-    single_ref = state["single_s42"]
-    multi_ref = state["multi_s42"]
-    lines = [
-        "Variant & Accuracy & Macro-F1 & $\\Delta$ \\\\",
+    rows = [
+        "Variant & Seeds & Accuracy & Macro-F1 & $\\Delta$ \\\\",
         "\\midrule",
-        row("Single-task, full training set", single_ref, single_ref),
-        row("Single-task, text-deduplicated", state["dedupe_single"], single_ref),
+        row("Single-task (reference)", "t2_single_s", single_ref),
+        row("\\quad deduplicated", "t2_single_dedup_s", single_ref),
+        row("\\quad XLM-R base", "t2_single_xlmr_s", single_ref),
+        row("\\quad 128 tokens", "t2_single_len128_s", single_ref),
+        row("\\quad single LR", "t2_single_lr2_s", single_ref),
         "\\midrule",
-        row("Multi-task, full training set", multi_ref, multi_ref),
-        row("Multi-task, text-deduplicated", state["dedupe_multi"], multi_ref),
+        row("Multi-task (reference)", "t2_multitask_s", multi_ref),
+        row("\\quad deduplicated", "t2_multitask_dedup_s", multi_ref),
+        row("\\quad single LR", "t2_multitask_lr2_s", multi_ref),
         "\\midrule",
-        row("Single-task, XLM-R base", state["xlmr"], single_ref),
-        row("Single-task, 128-token window", state["len128"], single_ref),
+        row("Description fusion", "t2_fusion_s", single_ref),
     ]
+    body = "\n".join(item for item in rows if item)
     caption = (
-        "Controls for the remaining validity concerns, all at seed 42 with the locked protocol unless "
-        "stated otherwise. The $\\Delta$ column is the macro-F1 difference against the matching "
-        "reference row, in percentage points. The deduplicated rows remove every training review whose "
-        "text also occurs in the test split."
+        "Every control re-run against its own reference under the locked protocol. $\\Delta$ is the "
+        "macro-F1 difference against the matching reference mean, in percentage points. The deduplicated "
+        "rows drop every training review whose text also occurs in the test split; the fusion row encodes "
+        "the product description in a second forward pass and concatenates it with the review vector, so "
+        "the description is no longer truncated."
     )
-    body = "\n".join(lines)
+    content = (
+        "\\begin{table}[t]\n"
+        f"\\caption{{{caption}}}\n"
+        "\\label{tab:controls}\n"
+        "\\centering\n\\small\n"
+        "\\setlength{\\tabcolsep}{3pt}\n"
+        "\\begin{tabular}{@{}lcccc@{}}\n"
+        "\\toprule\n" + body + "\n\\bottomrule\n"
+        "\\end{tabular}\n\\end{table}\n"
+    )
     with open(os.path.join(TABLES, "controls.tex"), "w", encoding="utf-8") as handle:
-        handle.write(table_environment("tab:controls", caption, "@{}lccc@{}", body))
+        handle.write(content)
+
+
+def aggregate_mean(runs: dict, prefix: str) -> dict:
+    """Mean accuracy and macro-F1 over the runs matching ``prefix``."""
+    try:
+        agg = aggregate(runs, prefix)
+    except KeyError:
+        return {"acc": 0.0, "f1": 0.0, "n": 0}
+    return {"acc": agg["acc"]["mean"], "f1": agg["f1"]["mean"], "n": agg["acc"]["n"]}
 
 
 def write_numbers(state: dict) -> None:
@@ -419,6 +448,10 @@ def write_numbers(state: dict) -> None:
         f"\\newcommand{{\\DedupRemoved}}{{{state['dedupe_removed']}}}",
         f"\\newcommand{{\\XlmrFone}}{{{pct(state['xlmr']['f1'])}}}",
         f"\\newcommand{{\\LenFone}}{{{pct(state['len128']['f1'])}}}",
+        f"\\newcommand{{\\FusionFone}}{{{pct(state['fusion']['f1'])}}}",
+        f"\\newcommand{{\\FusionAcc}}{{{pct(state['fusion']['acc'])}}}",
+        f"\\newcommand{{\\LrSingleFone}}{{{pct(state['lr_single']['f1'])}}}",
+        f"\\newcommand{{\\LrMultiFone}}{{{pct(state['lr_multi']['f1'])}}}",
         f"\\newcommand{{\\EceSingle}}{{{100 * state.get('calibration', {}).get('single', {}).get('ece', 0.0):.1f}}}",
         f"\\newcommand{{\\EceMulti}}{{{100 * state.get('calibration', {}).get('multi', {}).get('ece', 0.0):.1f}}}",
     ]
@@ -543,10 +576,13 @@ def main() -> None:
 
     state["multi_s42"] = single_run_metrics(runs, "t2_multitask_s42")
     state["single_s42"] = single_run_metrics(runs, "t2_single_s42")
-    state["dedupe_single"] = single_run_metrics(runs, "t2_single_dedup_s42")
-    state["dedupe_multi"] = single_run_metrics(runs, "t2_multitask_dedup_s42")
-    state["xlmr"] = single_run_metrics(runs, "t2_single_xlmr_s42")
-    state["len128"] = single_run_metrics(runs, "t2_single_len128_s42")
+    state["dedupe_single"] = aggregate_mean(runs, "t2_single_dedup_s")
+    state["dedupe_multi"] = aggregate_mean(runs, "t2_multitask_dedup_s")
+    state["xlmr"] = aggregate_mean(runs, "t2_single_xlmr_s")
+    state["len128"] = aggregate_mean(runs, "t2_single_len128_s")
+    state["fusion"] = aggregate_mean(runs, "t2_fusion_s")
+    state["lr_single"] = aggregate_mean(runs, "t2_single_lr2_s")
+    state["lr_multi"] = aggregate_mean(runs, "t2_multitask_lr2_s")
     state["dedupe_removed"] = runs.get("t2_single_dedup_s42", {}).get("removed_train_rows", 0)
     state["weighted"] = single_run_metrics(runs, "t2_multitask_weighted_s42")
     state["metadata"] = single_run_metrics(runs, "t2_single_metadata_s42")

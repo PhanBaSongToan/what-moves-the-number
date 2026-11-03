@@ -1,20 +1,22 @@
 \begin{table}[t]
-\caption{Controls for the remaining validity concerns, all at seed 42 with the locked protocol unless stated otherwise. The $\Delta$ column is the macro-F1 difference against the matching reference row, in percentage points. The deduplicated rows remove every training review whose text also occurs in the test split.}
+\caption{Every control re-run against its own reference under the locked protocol. $\Delta$ is the macro-F1 difference against the matching reference mean, in percentage points. The deduplicated rows drop every training review whose text also occurs in the test split; the fusion row encodes the product description in a second forward pass and concatenates it with the review vector, so the description is no longer truncated.}
 \label{tab:controls}
 \centering
 \small
-\begin{tabular}{@{}lccc@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-Variant & Accuracy & Macro-F1 & $\Delta$ \\
+Variant & Seeds & Accuracy & Macro-F1 & $\Delta$ \\
 \midrule
-Single-task, full training set & 90.74 & 75.35 & +0.00 \\
-Single-task, text-deduplicated & 90.24 & 73.48 & -1.87 \\
+Single-task (reference) & 3 & 90.89 $\pm$ 0.31 & 76.10 $\pm$ 0.71 & +0.00 \\
+\quad deduplicated & 3 & 90.14 $\pm$ 0.16 & 74.72 $\pm$ 1.34 & -1.38 \\
+\quad XLM-R base & 1 & 90.87 & 76.42 & +0.32 \\
+\quad 128 tokens & 1 & 91.22 & 76.17 & +0.07 \\
 \midrule
-Multi-task, full training set & 91.37 & 77.10 & +0.00 \\
-Multi-task, text-deduplicated & 90.66 & 77.15 & +0.05 \\
+Multi-task (reference) & 3 & 90.87 $\pm$ 0.45 & 76.02 $\pm$ 0.96 & +0.00 \\
+\quad deduplicated & 3 & 90.75 $\pm$ 0.31 & 77.02 $\pm$ 0.77 & +1.00 \\
 \midrule
-Single-task, XLM-R base & 90.87 & 76.42 & +1.07 \\
-Single-task, 128-token window & 91.22 & 76.17 & +0.81 \\
+Description fusion & 3 & 90.86 $\pm$ 0.36 & 75.98 $\pm$ 1.15 & -0.12 \\
 \bottomrule
 \end{tabular}
 \end{table}
