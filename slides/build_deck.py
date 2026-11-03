@@ -602,7 +602,7 @@ table(s, [
     ["+ trọng số cân bằng lớp", "72,91", "−4,19"],
     ["Phẳng (chuẩn, seed 42)", "75,35", "—"],
     ["+ nối category & mô tả vào text", "76,66", "+1,31"],
-    ["+ fusion mã hoá riêng mô tả", "75,98", "+0,63"],
+    ["+ fusion mã hoá riêng mô tả", "76,29", "+0,94"],
 ], Inches(0.75), Inches(1.8), Inches(11.8), [4.6, 1.6, 2.0], row_height=Inches(0.55),
     body_size=14, highlight_rows=(2,))
 callout(s, "Trọng số làm tệ hẳn: lớp 54 dòng bị phạt quá mức.\n"
