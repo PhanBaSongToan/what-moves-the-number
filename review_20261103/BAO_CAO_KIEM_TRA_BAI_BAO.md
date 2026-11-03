@@ -299,7 +299,7 @@ Chọn hướng **IEEEtran** và **Giai đoạn A + B**. Bản mới nằm ở `
 
 ### 11.2 Kết quả mới — và kết luận đã đảo chiều
 
-13 run, mỗi run ~9 phút trên RTX 5050 Laptop:
+21 run, mỗi run 6–13 phút trên RTX 5050 Laptop:
 
 | Cấu hình | Accuracy | Macro-F1 |
 |---|---|---|
@@ -307,13 +307,19 @@ Chọn hướng **IEEEtran** và **Giai đoạn A + B**. Bản mới nằm ở `
 | Multi-task PhoBERT, Task 2 (3 seed) | 90,87 ± 0,45 | **76,02 ± 0,96** |
 | Binary chuyên dụng, Task 1 (3 seed) | 91,73 | 89,46 |
 | Binary head của multi-task, Task 1 | 91,68 | 89,15 |
-| Single-task, split disjoint (1 seed) | 91,21 | 75,63 |
-| Multi-task, split disjoint (1 seed) | 90,73 | 75,72 |
+| Single-task, split disjoint (3 seed) | 90,99 | **75,94** |
+| Multi-task, split disjoint (3 seed) | 90,67 | **73,98** |
+| Single-task, bỏ 47 dòng train trùng văn bản với test | 90,24 | 73,48 |
+| Multi-task, bỏ 47 dòng train trùng văn bản với test | 90,66 | 77,15 |
+| Single-task, backbone XLM-R base | 90,87 | 76,42 |
+| Single-task, cửa sổ 128 token | 91,22 | 76,17 |
 | Multi-task + weighted type loss | 89,43 | 72,91 |
 | Single-task + metadata concat | 90,66 | 76,66 |
 | TF-IDF + Linear SVM (tham chiếu) | 84,40 | 66,52 |
 
 **Kết luận quan trọng: mức tăng +0,73 pp của bản cũ là nhiễu seed.** Với 3 seed, chênh lệch là −0,08 pp (bootstrap CI [−0,61; +3,94], p = 0,142). Seed 42 cho +1,75 pp, seed 43 và 44 đảo lại. Bài mới viết lại toàn bộ abstract/kết luận theo hướng trung thực: đóng góp nằm ở protocol, audit leakage/duplicate và phân rã lỗi, **không** phải ở kiến trúc multi-task.
+
+Ba thí nghiệm kiểm soát còn cho thấy thứ hạng **phụ thuộc vào cách dựng evaluation**: trên sản phẩm mới, single-task hơn 1,96 pp; sau khi bỏ các dòng train trùng văn bản, multi-task lại hơn 3,67 pp. Đây là thông điệp chính của bài: không thể kết luận về kiến trúc nếu chưa cố định evaluation — và mọi so sánh một split, kể cả của bài này, đều phải đọc theo tinh thần đó.
 
 ### 11.3 Phát hiện mới được đưa vào bài
 
