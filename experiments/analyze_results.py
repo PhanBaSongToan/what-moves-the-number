@@ -684,8 +684,8 @@ def main() -> None:
     state["task1_head"] = {"acc": head["acc"]["mean"], "acc_sd": head["acc"]["sd"],
                            "f1": head["f1"]["mean"], "f1_sd": head["f1"]["sd"]}
 
-    disjoint_single = safe_aggregate(runs, "t2_single_disjoint")
-    disjoint_multi = safe_aggregate(runs, "t2_multitask_disjoint")
+    disjoint_single = safe_aggregate(runs, "t2_single_disjoint_s")
+    disjoint_multi = safe_aggregate(runs, "t2_multitask_disjoint_s")
     state["disjoint_single"] = {
         "acc": disjoint_single["acc"]["mean"], "acc_sd": disjoint_single["acc"]["sd"],
         "f1": disjoint_single["f1"]["mean"], "f1_sd": disjoint_single["f1"]["sd"],
