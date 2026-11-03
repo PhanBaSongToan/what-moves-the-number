@@ -1,8 +1,16 @@
-# TMG301 — Text Mining
+# What Moves the Number?
 
-Course project for TMG301 (Text Mining). The main deliverable is an IEEE-format
-paper on Vietnamese spam-review classification; the repository also keeps the
-other course assignments.
+**Evaluation and Encoder Choices Dominate Architecture in Vietnamese Spam-Review Classification**
+
+A controlled study of Vietnamese spam-review type classification on ViSpamReviews v2.
+Thirty-four runs under one locked protocol measure how much each design choice moves
+macro-F1: the multi-task objective and metadata fusion move it by at most a tenth of a
+point, changing the backbone costs 1.5, and changing the evaluation (deduplicating
+training text, or holding products out) moves it by 1.4 to 2.3 points and reverses the
+ranking of the two models.
+
+The IEEE paper is `paper/paper.pdf` (source in `paper/paper.tex`, 8 pages, XeLaTeX).
+The repository also keeps the other course assignments.
 
 ## Layout
 

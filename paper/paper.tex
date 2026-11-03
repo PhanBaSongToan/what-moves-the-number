@@ -21,6 +21,9 @@
 \setlength{\floatsep}{8pt plus 2pt minus 2pt}
 \setlength{\intextsep}{8pt plus 2pt minus 2pt}
 
+% allow a little extra stretch so long tokens do not leave rivers
+\setlength{\emergencystretch}{1.2em}
+
 \newcommand{\phobert}{PhoBERT}
 \newcommand{\vispam}{ViSpamReviews}
 \newcommand{\ie}{i.e.,}
@@ -30,8 +33,8 @@
 
 \begin{document}
 
-\title{Multi-Task PhoBERT for Vietnamese Spam-Review Type Classification:\\
-A Controlled Reproduction and a Product-Disjoint Evaluation}
+\title{What Moves the Number?\\
+Evaluation and Encoder Choices Dominate Architecture in Vietnamese Spam-Review Classification}
 
 \author{\IEEEauthorblockN{Phan B\'a Song To\`an, Tr\d{i}nh Minh B\d{a}o Tr\^an, and Tr\^an Quang Long}
 \IEEEauthorblockA{TMG301 Text Mining Course Project\\
@@ -40,7 +43,7 @@ Ho Chi Minh City, Vietnam}}
 \maketitle
 
 \begin{abstract}
-Vietnamese e-commerce platforms depend on user reviews, and in the dataset studied here roughly a quarter of the reviews are labelled spam. The \vispam{} v2 dataset labels reviews as non-spam, fake review, brand-only review, or non-review, and prior work reports strong \phobert{} scores on a random split of that data. We revisit the setting with three questions: is the published result reproducible from the public release, does hierarchical multi-task supervision improve the four-class task, and does accuracy survive when no product appears in both training and test data? To answer them we fix one training protocol that every model follows, compare a standard \phobert{} classifier with a shared-encoder two-head model over three seeds, construct a product-disjoint split, and measure verbatim review leakage that survives product-level splitting. The hierarchical objective does not help: macro-F1 is \SingleFone{} $\pm$ \SingleFoneSD{} for the flat classifier and \MultiFone{} $\pm$ \MultiFoneSD{} for the multi-task model, and the paired difference of \DeltaFone{} points is not distinguishable from zero. Both models keep most of their accuracy when products are held out, although the cascade degrades more than the flat classifier; removing duplicated training text reverses that ordering, so the comparison is reported as evaluation-dependent rather than as a verdict on the architecture. Error analysis attributes most of the remaining loss to missed spam and to template-like non-spam reviews whose labels are hard to defend, not to confusion among the spam types. We report these outcomes together with the two interventions re-run under the same protocol, and we release our configurations, logs and per-row predictions.
+Vietnamese e-commerce reviews are labelled as non-spam, fake review, brand-only review or non-review, and a \phobert{} classifier already reaches the mid seventies in macro-F1 on this four-class task. Papers in this area usually report one number on one split and attribute the gain to the architecture. We test that attribution directly. Under one locked training protocol we run 34 configurations and measure how much each design choice moves macro-F1: a hierarchical multi-task objective, metadata fusion that encodes the product description in a separate pass, the backbone, the token window, the learning-rate schedule, and two evaluation choices --- removing training text that also occurs verbatim in the test split, and holding products out of training. The architecture choices move the metric by at most a tenth of a point. The evaluation choices move it by 1.4 to 2.3 points and reverse the ranking of the two models, and changing the backbone costs 1.5. Seed noise alone is 0.7 to 1.0. We also report an error decomposition showing that missed spam rather than wrong spam type dominates the remaining loss, and a quantified share of label noise in template-like non-spam reviews.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -52,14 +55,15 @@ Reviews drive product discovery on e-commerce platforms, and the same incentive 
 
 The \vispam{} dataset \cite{vispam2022} and its metadata-extended version \cite{vispam2024} formalise the problem as two tasks. Task~1 is binary: non-spam versus spam. Task~2 is four-class: non-spam plus three spam types. Prior work reports \phobert{} \cite{phobert} as the strongest text-only backbone, with metadata fusion improving results further \cite{vispam2024}. Two properties of that evaluation limit how far the numbers can be generalised. First, the split is random over reviews, so the same product can appear in training and test data; product-specific wording and copied templates then inflate the score. Second, the four classes are not independent: a review cannot be both non-spam and a spam type, so a flat four-way classifier ignores the structure that the label set already encodes.
 
-This paper is deliberately a small, auditable study rather than a leaderboard entry. We ask three questions and answer each with artifacts that can be re-run:
+This paper is deliberately a small, auditable study rather than a leaderboard entry. We ask four questions and answer each with artifacts that can be re-run:
 \begin{enumerate}
 \item \textbf{Reproduction.} Can the published \phobert{} result be re-obtained from the public release, and where do the public and internal dataset snapshots diverge?
 \item \textbf{Supervision.} Does a hierarchical two-head objective, which trains a binary detector and a spam-type classifier on a shared encoder, improve the four-class metric when both models share one protocol and are evaluated over several seeds?
 \item \textbf{Generalisation.} How much accuracy depends on seeing the same product during training, and does text-level duplication remain a leak even after product-level splitting?
+\item \textbf{Sensitivity.} Of all these choices, which ones actually move the metric, and are the effects larger than seed noise?
 \end{enumerate}
 
-Our contributions are: (i) a documented, single-protocol comparison in which the only difference between the two models is the supervision objective, with three seeds, paired bootstrap confidence intervals and an exact McNemar test; (ii) a product-disjoint split with an explicit leakage audit, extended by a verbatim-duplicate audit that the original evaluation does not report; (iii) a quantitative characterisation of where the four-class model fails, separating spam-detection errors from spam-type errors; and (iv) the outcome of class-weighted supervision and of naive metadata concatenation, both re-run under the same protocol as the main comparison. We also state plainly which of our earlier exploratory numbers are \emph{not} comparable with the ones reported here, because they were produced before the protocol was locked.
+Our contributions are: (i) an effect-size table that puts every design choice on one scale, with seed noise as the ruler, and shows that evaluation choices outweigh architectural ones by an order of magnitude; (ii) a documented, single-protocol comparison in which the only difference between the two models is the supervision objective, with three seeds, paired bootstrap intervals and an exact McNemar test; (iii) a product-disjoint split with an explicit leakage audit, extended by a verbatim-duplicate audit that the original evaluation does not report; (iv) a quantitative decomposition of the remaining errors, separating spam detection from spam typing, plus a measured share of label noise in template-like non-spam reviews; and (v) negative results for class-weighted supervision, naive metadata concatenation and a fusion baseline that avoids truncation altogether. We also state plainly which of our earlier exploratory numbers are \emph{not} comparable with the ones reported here, because they were produced before the protocol was locked.
 
 \section{Related Work}
 \subsection{Opinion spam and review spam detection}
@@ -103,7 +107,7 @@ Label & Meaning & Training example \\
 \end{table*}
 
 \subsection{Released split versus published split}
-We use the public release \texttt{sonlam1102/vispamdetection2}. Table~\ref{tab:data} compares it with the split described in \cite{vispam2024}. The row counts differ in every split (14{,}306 / 1{,}590 / 3{,}974 against 14{,}284 / 1{,}589 / 3{,}963), and so do the per-class counts on the test split (2{,}914 / 54 / 310 / 696 against 2{,}911 / 54 / 309 / 689). The releases are therefore not the same snapshot, and our reproduction must be read as an approximate reproduction of the published experiment rather than an exact re-run. We do not compare average review length across the two versions, because the published statistics are computed after Vietnamese word segmentation while ours count whitespace tokens; the two units are not interchangeable.
+We use the public release of \vispam{} v2\footnote{\url{https://huggingface.co/datasets/sonlam1102/vispamdetection2}.}. Table~\ref{tab:data} compares this release with the split described in \cite{vispam2024}. The row counts differ in every split (14{,}306 / 1{,}590 / 3{,}974 against 14{,}284 / 1{,}589 / 3{,}963), and so do the per-class counts on the test split (2{,}914 / 54 / 310 / 696 against 2{,}911 / 54 / 309 / 689). The releases are therefore not the same snapshot, and our reproduction must be read as an approximate reproduction of the published experiment rather than an exact re-run. We do not compare average review length across the two versions, because the published statistics are computed after Vietnamese word segmentation while ours count whitespace tokens; the two units are not interchangeable.
 
 \begin{table*}[t]
 \caption{The public release used here against the split reported in \cite{vispam2024}. Class columns are the four labels in order. Vocabulary and length statistics are not directly comparable between the two sources: the published figures count words after Vietnamese word segmentation, ours count whitespace-separated tokens, and the same review therefore contributes fewer units in the published column.}
@@ -131,7 +135,7 @@ The label distribution is heavily skewed: 73.5\% of training reviews are non-spa
 Two reviews of the same product share vocabulary that has nothing to do with spamminess: model names, sizes, seller boilerplate. A random review split therefore leaks product identity. To measure it we normalise each row's product name, category and description (NFKC, lower case, collapsed whitespace) and treat the concatenation as a product key. The release contains 1{,}676 distinct keys in training, 1{,}006 in development and 1{,}479 in test, and the keys overlap heavily: 996 between train and dev, 1{,}456 between train and test, and 921 between dev and test. Any random-split score is optimistic with respect to a deployment in which new products arrive continuously.
 
 \subsection{Product-disjoint split}
-For the robustness experiment we rebuild the split at the product level. All rows are pooled and grouped by the normalised key; a first \texttt{GroupShuffleSplit} holds out 20\% of the groups as test, and a second splits the remainder into training and development with a 12.5\% hold-out. The result contains 13{,}985 / 1{,}947 / 3{,}938 rows with class supports 10{,}255/194/1{,}108/2{,}428, 1{,}393/39/141/374 and 2{,}961/49/284/644. By construction no product key is shared between splits, which we verify explicitly; the row-level assignment is released as an index file (\texttt{product\_disjoint\_ids.csv}) so that the split can be rebuilt from the public release without shipping three copies of the data. Because the same pooling removes the original training/test boundary, the disjoint test set is a new sample, not a filtered version of the old one, and we therefore always compare models \emph{within} the disjoint split rather than reading the difference between splits as a model property.
+For the robustness experiment we rebuild the split at the product level. All rows are pooled and grouped by the normalised key; a first \texttt{GroupShuffleSplit} holds out 20\% of the groups as test, and a second splits the remainder into training and development with a 12.5\% hold-out. The result contains 13{,}985 / 1{,}947 / 3{,}938 rows with class supports 10{,}255/194/1{,}108/2{,}428, 1{,}393/39/141/374 and 2{,}961/49/284/644. By construction no product key is shared between splits, which we verify explicitly; the row-level assignment is released as an index file (\texttt{product\_\allowbreak disjoint\_\allowbreak ids.csv}) so that the split can be rebuilt from the public release without shipping three copies of the data. Because the same pooling removes the original training/test boundary, the disjoint test set is a new sample, not a filtered version of the old one, and we therefore always compare models \emph{within} the disjoint split rather than reading the difference between splits as a model property.
 
 \subsection{Verbatim duplication that survives product splitting}
 Product-level grouping removes one leak but not the other. Some spam templates are copied across products, so a review can appear verbatim in both training and test data even when no product is shared. Comparing reviews after collapsing whitespace, stripping and folding case, we find that 38 test rows (35 distinct texts) of the official split also occur in training; over the whole release, 213 rows belong to duplicate groups and the 19{,}870 rows contain only 19{,}750 distinct texts. In the product-disjoint split, 30 test rows still occur verbatim in training. The duplicates are not spread evenly: of the 114 duplicated training rows, 51 are non-reviews (\textsc{Spam-3}), against 11 fake reviews and 10 brand-only reviews, which is what one expects if templates are copied for padding rather than for persuasion. The effect on the aggregate metric is small, but it matters for the claim that the disjoint split measures generalisation to unseen products: it measures generalisation to unseen \emph{products}, not to unseen \emph{text}. We keep these rows and report the number instead of silently dropping them.
@@ -149,7 +153,7 @@ Every number in Section~\ref{sec:results} comes from a single script and a singl
 \toprule
 Item & Value \\
 \midrule
-Encoder & \texttt{vinai/phobert-base-v2} (135M) \\
+Encoder & \texttt{vinai/\allowbreak phobert-\allowbreak base-v2} (135M) \\
 Max sequence length & 100 tokens \\
 Padding & dynamic, per batch, multiple of 8 \\
 Batch size & 32 \\
@@ -237,6 +241,7 @@ Two interventions are re-run under the locked protocol so that they can be compa
 \input{tables/disjoint.tex}
 \input{tables/ablation.tex}
 \input{tables/controls.tex}
+\input{tables/effects.tex}
 \input{tables/perclass.tex}
 
 \subsection{Reproduction}
@@ -297,16 +302,12 @@ M & Spam-3 & No-Spam & ``It's the first time I've bought it and i haven't used y
 \end{tabularx}
 \end{table*}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/learning_curves.pdf}
-\caption{Development macro-F1 per epoch, mean over three seeds with one standard deviation shaded.}
-\label{fig:curves}
-\end{figure}
+\subsection{What moves the metric}
+Table~\ref{tab:effects} puts every design choice on one scale, with the seed spread as the ruler. The architectural choices sit at zero, the backbone at 1.5 points, and the evaluation choices at 1.4 to 2.3. If the goal is a better number on this task, changing the encoder or the evaluation is worth an order of magnitude more than changing the supervision structure.
 
 \section{Discussion}
 \label{sec:discussion}
-\emph{There is no reliable gain.} On average the multi-task model is a tenth of a point behind the flat classifier, and the seed-to-seed spread of either model is an order of magnitude larger. Our own first seed told the opposite story --- 77.10 against 75.35, a gap that looks convincing when it is reported alone --- and seeds 43 and 44 reverse it. A claim of architectural advantage built on that single run would have been an artefact of the seed, which is why we report a mean with an interval and both paired tests.
+\emph{The number is set by the evaluation, not by the architecture.} Table~\ref{tab:effects} makes the comparison explicit. On the official split the two models are a tenth of a point apart; the same pair is 2.3 points apart once duplicated training text is removed, and 2.0 points apart when products are held out. Our own first seed told a third story --- 77.10 against 75.35 --- which is what a single-split claim looks like before it is averaged. Each of these is a defensible evaluation and they disagree; a single-split comparison, including ours, should be read with that in mind.
 
 \emph{Neither head is well calibrated.} Top-label expected calibration error on the test set is \EceSingle\% for the flat model and \EceMulti\% for the cascade, over ten bins. The cascade number is the less trustworthy of the two, because its class probabilities are products of two marginals (Eq.~\eqref{eq:probs}) and shrink with every multiplication. Neither output should be used as a probability without recalibration \cite{guo2017}.
 
@@ -314,12 +315,10 @@ M & Spam-3 & No-Spam & ``It's the first time I've bought it and i haven't used y
 
 \emph{Product overlap does not drive the result, and it does not rescue the hierarchy.} The audit finds heavy product-level overlap in the official split, yet removing it costs the flat model little: 76.10 on the official split against \DiscSingleFone{} on the disjoint one. The cascade degrades more, from 76.02 to \DiscMultiFone{}. Cross-split comparisons are not clean, because the disjoint test set is a new sample, but the within-split ordering is, and on unseen products the flat model is ahead. The verbatim-duplicate count explains part of why the random split is generous to both models; a truly clean evaluation would add a text-level deduplication step on top of group splitting, which Table~\ref{tab:controls} approximates.
 
-\emph{The ranking depends on how the evaluation is built.} Averaged over three seeds on the official split the two models are tied; on the product-disjoint split the flat model is ahead; after removing duplicated training text the cascade is ahead. Each of these is a defensible evaluation and they disagree. That is the practical lesson of this study: the architecture question cannot be settled without fixing the evaluation, and a single-split comparison --- including ours --- should be read with that in mind.
-
 \emph{Negative results are part of the result.} Two plausible interventions were re-run and neither helped. Inverse-frequency weighting made the metric markedly worse, which is the usual failure mode when a re-weighting scheme is tuned for a class with 54 test rows; metadata concatenation, which we expected to hurt because of truncation, is within noise of the baseline and therefore tells us nothing about metadata as such. Reporting both costs a page and saves the next reader a week.
 
 \section{Threats to Validity}
-\paragraph{Construct validity} The labels are human annotations of a subjective property. The \textsc{Spam-1} examples in Table~\ref{tab:labels} are fluent and positive, and the boundary between fabricated praise and genuine enthusiasm is not always observable from the text alone. Our metrics inherit that noise.
+\paragraph{Construct validity} The labels are human annotations of a subjective property: the boundary between fabricated praise and genuine enthusiasm is not always observable from text alone, and our metrics inherit that noise.
 
 \paragraph{Internal validity} All primary runs share one hyperparameter setting; the controls in Table~\ref{tab:controls} vary the token window and the backbone, and neither moves the score materially, but a full sweep, including the learning rate, is still out of scope. Early stopping is a second source of variance: the development split contains only 17 Spam-1 rows, so the epoch that maximises development macro-F1 differs across seeds (3 to 9 in our runs) and part of the seed spread is stopping noise rather than model noise. Dynamic padding and bfloat16 change numerics slightly relative to the exploratory runs, which is why those runs are reported separately and not mixed into the tables.
 
@@ -328,7 +327,7 @@ M & Spam-3 & No-Spam & ``It's the first time I've bought it and i haven't used y
 \paragraph{Conclusion validity} Three seeds give a coarse estimate of variance. The bootstrap and McNemar tests are applied to a single test sample per seed, and the rarest class has 54 test rows, so its per-class interval is wide by construction. We report per-class numbers as descriptive rather than inferential.
 
 \section{Reproducibility}
-The repository contains one script that trains every model reported here, the split construction for the product-disjoint evaluation, the audit scripts, and the configuration, log, metric and per-row prediction files of every run. Model checkpoints are not shipped, because the training script regenerates them from the recorded configurations. Seeds, hyperparameters, hardware and runtimes are listed in Table~\ref{tab:protocol}. Package versions are pinned in \texttt{requirements.txt}, and every table and figure in this paper is generated from the result files by a single analysis script, so a number in the text can be traced to the run that produced it.
+The repository contains one script that trains every model reported here, the split construction for the product-disjoint evaluation, the audit scripts, and the configuration, log, metric and per-row prediction files of every run. Model checkpoints are not shipped, because the training script regenerates them from the recorded configurations. Seeds, hyperparameters and hardware are listed in Table~\ref{tab:protocol}. Package versions are pinned in \texttt{requirements.txt}, and every table and figure in this paper is generated from the result files by a single analysis script, so a number in the text can be traced to the run that produced it.
 
 \section{Conclusion}
 We revisited Vietnamese spam-review classification with a single locked protocol, three seeds, a product-disjoint split and a duplicate audit. The published result is reproducible in order of magnitude but not exactly, because the public release is not the published snapshot. The hierarchical multi-task objective gives no measurable improvement over a flat classifier once seeds are averaged, although the two models make systematically different mistakes. Under a product-disjoint split the flat classifier is ahead by about two points, so the hierarchy does not buy robustness either. The error decomposition points to the binary decision, and to annotation noise in template-like non-spam reviews, rather than to type confusion, as the place where the next improvement has to come from; the verbatim-duplicate count shows that product-level splitting alone is not a clean test of generalisation.

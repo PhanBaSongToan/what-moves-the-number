@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this code or the paper, please cite the work below."
-title: "Multi-Task PhoBERT for Vietnamese Spam-Review Type Classification: A Controlled Reproduction and a Product-Disjoint Evaluation"
+title: "What Moves the Number? Evaluation and Encoder Choices Dominate Architecture in Vietnamese Spam-Review Classification"
 type: software
 authors:
   - family-names: "Phan"
@@ -16,9 +16,11 @@ keywords:
   - PhoBERT
   - multi-task learning
   - reproducibility
+  - evaluation
 abstract: >-
-  A controlled reproduction of Vietnamese spam-review type classification on
-  ViSpamReviews v2, with a locked training protocol, three seeds, a
-  product-disjoint evaluation, a verbatim-duplicate audit and an error
-  decomposition. The hierarchical multi-task objective does not improve
-  macro-F1 over a flat classifier once seeds are averaged.
+  Thirty-four controlled runs on ViSpamReviews v2 measure how much each design
+  choice moves macro-F1. The multi-task objective and metadata fusion move it by
+  at most a tenth of a point; changing the backbone costs 1.5, and changing the
+  evaluation (deduplicating training text or holding products out) moves it by
+  1.4 to 2.3 points and reverses the ranking of the two models. Seed noise alone
+  is 0.7 to 1.0.

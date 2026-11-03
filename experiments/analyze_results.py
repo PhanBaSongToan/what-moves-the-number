@@ -409,6 +409,50 @@ def aggregate_mean(runs: dict, prefix: str) -> dict:
     return {"acc": agg["acc"]["mean"], "f1": agg["f1"]["mean"], "n": agg["acc"]["n"]}
 
 
+def write_effects_table(state: dict) -> None:
+    """One row per design choice, so the paper can say what actually moves the metric."""
+    single, multi = state["single"], state["multi"]
+    rows = [
+        "Factor & Change & $\\Delta$ Macro-F1 \\\\",
+        "\\midrule",
+        f"Supervision & flat $\\rightarrow$ cascade, official & {signed(multi['f1'] - single['f1'])} \\\\",
+        f" & same, text-deduplicated & "
+        f"{signed(state['dedupe_multi']['f1'] - state['dedupe_single']['f1'])} \\\\",
+        f" & same, product-disjoint & "
+        f"{signed(state['disjoint_multi']['f1'] - state['disjoint_single']['f1'])} \\\\",
+        f"Metadata & $+$ description fusion & {signed(state['fusion']['f1'] - single['f1'])} \\\\",
+        f"Backbone & \\phobert{{}} $\\rightarrow$ XLM-R & {signed(state['xlmr']['f1'] - single['f1'])} \\\\",
+        f"Window & 100 $\\rightarrow$ 128 tokens & {signed(state['len128']['f1'] - single['f1'])} \\\\",
+        f"Schedule & two-rate $\\rightarrow$ single $2\\times10^{{-5}}$ & "
+        f"{signed(state['lr_single']['f1'] - single['f1'])} / {signed(state['lr_multi']['f1'] - multi['f1'])} \\\\",
+        f"Evaluation & full $\\rightarrow$ deduplicated, flat & "
+        f"{signed(state['dedupe_single']['f1'] - single['f1'])} \\\\",
+        f" & full $\\rightarrow$ deduplicated, cascade & "
+        f"{signed(state['dedupe_multi']['f1'] - multi['f1'])} \\\\",
+        "\\midrule",
+        f"Seed noise & standard deviation, flat / cascade & "
+        f"$\\pm${pct(single['f1_sd'])} / $\\pm${pct(multi['f1_sd'])} \\\\",
+    ]
+    caption = (
+        "Which choices move macro-F1. Every $\\Delta$ is measured against the matching reference in "
+        "Tables~\\ref{tab:main}--\\ref{tab:controls}; the last row is the seed-to-seed standard "
+        "deviation of the two models, which sets the scale for judging the others."
+    )
+    body = "\n".join(rows)
+    content = (
+        "\\begin{table}[t]\n"
+        f"\\caption{{{caption}}}\n"
+        "\\label{tab:effects}\n"
+        "\\centering\n\\small\n"
+        "\\setlength{\\tabcolsep}{4pt}\n"
+        "\\begin{tabular}{@{}llc@{}}\n"
+        "\\toprule\n" + body + "\n\\bottomrule\n"
+        "\\end{tabular}\n\\end{table}\n"
+    )
+    with open(os.path.join(TABLES, "effects.tex"), "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
 def write_numbers(state: dict) -> None:
     single, multi = state["single"], state["multi"]
     boot = state.get("bootstrap") or {}
@@ -625,6 +669,7 @@ def main() -> None:
     write_perclass_table(state)
     write_gate_table(state)
     write_controls_table(state, runs)
+    write_effects_table(state)
     plot_confusion(runs)
     plot_curves(runs)
 
