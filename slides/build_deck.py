@@ -315,6 +315,37 @@ notes(s, "Bốn câu hỏi này chính là bốn phần của bài. Câu 4 là c
          "quan trọng nhất — cả bài là để trả lời nó.")
 
 
+
+# ---------------------------------------------------------------- roadmap
+s = slide()
+header(s, "Bài này đi theo một mạch duy nhất", "Bản đồ")
+cards = [
+    ("1", "VẤN ĐỀ",
+     "Bài gốc báo 71,56 macro-F1\ntrên một split ngẫu nhiên.\nCâu hỏi: con số đó nói gì?"),
+    ("2", "CÁCH LÀM",
+     "Một protocol duy nhất · 3 seed\nkiểm toán hai lỗ hổng dữ liệu\n53 cấu hình, cùng một thang"),
+    ("3", "PHÁT HIỆN",
+     "Kiến trúc: 0,1 điểm\nCách đánh giá: 1,0–2,3 điểm\nNhiễu seed: 0,7–1,0"),
+]
+for index, (num, label, body) in enumerate(cards):
+    left = Inches(0.75 + index * 4.05)
+    box = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, Inches(1.9),
+                             Inches(3.7), Inches(3.5))
+    box.fill.solid()
+    box.fill.fore_color.rgb = LIGHT
+    box.line.fill.background()
+    box.adjustments[0] = 0.06
+    textbox(s, left + Inches(0.3), Inches(2.1), Inches(0.9), Inches(0.7), num, size=34,
+            bold=True, color=BLUE)
+    textbox(s, left + Inches(1.05), Inches(2.22), Inches(2.4), Inches(0.4), label, size=15,
+            bold=True, color=NAVY)
+    textbox(s, left + Inches(0.3), Inches(3.1), Inches(3.1), Inches(2.0), body, size=14,
+            color=DARK, spacing=1.25)
+callout(s, "Mỗi thí nghiệm trong bài trả lời một trong ba ô này — và không có thí nghiệm nào thừa.",
+        Inches(0.75), Inches(5.75), Inches(11.8), Inches(0.9), size=15)
+notes(s, "Slide này để thầy thấy bản đồ trước khi đi vào chi tiết. Một vấn đề, một cách làm, ba phát hiện. "
+         "Nếu phần sau có rối, chỉ cần quay lại ba ô này: nhóm đang nói về cái gì, và nó thuộc ô nào.")
+
 # ---------------------------------------------------------------- related work
 s = slide()
 header(s, "Nhóm đứng ở đâu trong tài liệu", "Định vị")
@@ -483,9 +514,9 @@ table(s, [
     ["Tham chiếu TF-IDF", "84,63 / 78,80", "84,40 / 66,52"],
 ], Inches(0.75), Inches(1.85), Inches(11.8), [3.2, 2.6, 2.6], row_height=Inches(0.62),
     body_size=15, highlight_rows=(2,), highlight_color=RGBColor(0xE8, 0xF5, 0xEC))
-callout(s, "Bản công khai KHÁC snapshot bài gốc: 14.306 vs 14.284 dòng; test 3.974 vs 3.963\n"
-           "→ không được đọc là “nhóm vượt bài gốc”",
-        Inches(0.75), Inches(4.75), Inches(6.3), Inches(1.35), color=AMBER, size=14)
+callout(s, "Khác snapshot: 14.306 vs 14.284 dòng — không đọc là “vượt bài gốc”.\n"
+           "Và notebook gốc train 2 epoch, nhóm train 5–9 → chênh lệch chủ yếu do lịch huấn luyện.",
+        Inches(0.75), Inches(4.75), Inches(6.3), Inches(1.45), color=AMBER, size=13)
 callout(s, "Task 1: binary chuyên dụng 89,46 vs head của đa tác vụ 89,15\n"
            "→ không làm hỏng nhánh nhị phân",
         Inches(7.35), Inches(4.75), Inches(5.2), Inches(1.35), size=14)
@@ -494,8 +525,10 @@ textbox(s, Inches(0.75), Inches(6.35), Inches(11.8), Inches(0.4),
         size=13, color=GREY)
 notes(s, "Đây là câu hỏi đầu tiên trong bốn câu hỏi nghiên cứu: có tái lập được không. Câu trả lời: "
          "khớp về độ lớn — nhóm được 76,10 so với 71,56 công bố — nhưng KHÔNG được nói là vượt bài "
-         "gốc, vì bản công khai khác snapshot: 14.306 so với 14.284 dòng. Dòng TF-IDF để cho thấy mức "
-         "cải thiện của PhoBERT so với túi từ là gần 10 điểm.")
+         "gốc, vì bản công khai khác snapshot: 14.306 so với 14.284 dòng. Nhóm còn đọc notebook công "
+         "khai của tác giả: họ train 2 epoch, một learning rate; nhóm train 5 đến 9 epoch. Trong log "
+         "của nhóm, dừng ở epoch 2 mất 3,8 điểm dev — cùng bậc với 4,5 điểm chênh. Nên đây là giải "
+         "thích, không phải đo lường.")
 
 # ---------------------------------------------------------------- 12. main result
 s = slide()
@@ -712,13 +745,14 @@ notes(s, "Nếu thầy hỏi làm sao tin: mỗi run lưu đủ để chạy l�
 # ---------------------------------------------------------------- 19. conclusion
 s = slide()
 header(s, "Hạn chế, kết luận và những gì còn mở", "Kết luận", 19)
-textbox(s, Inches(0.75), Inches(1.75), Inches(5.6), Inches(0.4), "Ba hạn chế đã biết", size=18,
+textbox(s, Inches(0.75), Inches(1.75), Inches(5.6), Inches(0.4), "Bốn hạn chế đã biết", size=18,
         bold=True, color=RED)
 bullets(s, [
+    (0, "Một dataset, một ngôn ngữ"),
     (0, "Spam-1 chỉ 54 dòng test → F1 bất định"),
     (0, "Split disjoint mới là một cách chia"),
     (0, "Fusion dùng chung encoder, chưa phải S-PhoBERT hai tầng"),
-], Inches(0.75), Inches(2.25), Inches(5.6), Inches(2.4), size=14)
+], Inches(0.75), Inches(2.2), Inches(5.6), Inches(3.0), size=13)
 textbox(s, Inches(6.9), Inches(1.75), Inches(5.6), Inches(0.4), "Kết luận", size=18, bold=True,
         color=GREEN)
 bullets(s, [
@@ -737,8 +771,10 @@ textbox(s, Inches(0.75), Inches(5.72), Inches(11.9), Inches(0.6),
 textbox(s, Inches(0.75), Inches(6.7), Inches(11.9), Inches(0.4),
         "Mã nguồn + 53 run + PDF: github.com/PhanBaSongToan/what-moves-the-number",
         size=13, color=GREY)
-notes(s, "Kết lại: nếu chỉ mang về một câu, đó là câu ở dải xanh — câu hỏi đúng không phải mô hình nào "
-         "tốt hơn, mà là đo bằng thước nào. Nhóm sẵn sàng nhận câu hỏi.")
+notes(s, "Bốn hạn chế, nói trước để thầy không phải hỏi: một dataset một ngôn ngữ — đây là hạn chế nặng "
+         "nhất và nhóm biết; lớp hiếm 54 dòng; split mới là một cách chia; và fusion chưa phải bản hai "
+         "tầng. Kết lại: nếu chỉ mang về một câu, đó là câu ở dải xanh — câu hỏi đúng không phải mô hình "
+         "nào tốt hơn, mà là đo bằng thước nào. Nhóm sẵn sàng nhận câu hỏi.")
 
 presentation.save(OUT)
 print("saved", OUT, "slides:", len(presentation.slides))
