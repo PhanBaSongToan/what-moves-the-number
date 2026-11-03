@@ -48,15 +48,34 @@ while the source was an LNCS draft with three authors, and the draft cited the
 wrong first author for the reference paper. The current version addresses all of
 that:
 
-* one locked protocol for every model (`experiments/run_experiment.py`);
+* one locked protocol for every model (`experiments/run_experiment.py`), 21 runs;
 * three seeds for the headline comparison, paired bootstrap and McNemar test;
-* both models evaluated on the product-disjoint split, not just the proposal;
+* both models evaluated on the product-disjoint split over three seeds;
+* controls that answer the obvious objections: text-deduplicated training data,
+  an XLM-R backbone, and a 128-token window;
 * ablations re-run under the same protocol instead of a mixed-protocol table;
 * a verbatim-duplicate audit on top of the product-group audit;
 * label definitions with real examples, dataset statistics, error decomposition,
-  per-class tables and confusion matrices;
+  calibration, per-class tables and confusion matrices;
 * IEEEtran source that actually compiles, with the three authors and correct
   citation of the reference paper.
+
+### What the results say
+
+| Setting | Macro-F1 |
+|---|---|
+| Single-task PhoBERT, official split (3 seeds) | 76.10 ± 0.71 |
+| Multi-task PhoBERT, official split (3 seeds) | 76.02 ± 0.96 |
+| Single-task, product-disjoint (3 seeds) | 75.94 |
+| Multi-task, product-disjoint (3 seeds) | 73.98 |
+| Single-task, text-deduplicated training | 73.48 |
+| Multi-task, text-deduplicated training | 77.15 |
+| Single-task, XLM-R backbone | 76.42 |
+
+The hierarchy gives no gain on the official split, is behind on unseen products,
+and is ahead once duplicated training text is removed. The honest conclusion is
+that the ranking depends on how the evaluation is built, which is the paper's
+main message.
 
 The full audit is in `review_20261103/BAO_CAO_KIEM_TRA_BAI_BAO.md` (Vietnamese).
 

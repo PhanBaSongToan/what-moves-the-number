@@ -404,6 +404,7 @@ def write_numbers(state: dict) -> None:
         f"\\newcommand{{\\DiscSingleFone}}{{{pct(state['disjoint_single']['f1'])}}}",
         f"\\newcommand{{\\DiscMultiAcc}}{{{pct(state['disjoint_multi']['acc'])}}}",
         f"\\newcommand{{\\DiscMultiFone}}{{{pct(state['disjoint_multi']['f1'])}}}",
+        f"\\newcommand{{\\DiscDelta}}{{{signed(state['disjoint_multi']['f1'] - state['disjoint_single']['f1'])}}}",
         f"\\newcommand{{\\WeightedFone}}{{{pct(state['weighted']['f1'])}}}",
         f"\\newcommand{{\\MetaFone}}{{{pct(state['metadata']['f1'])}}}",
         f"\\newcommand{{\\GateFP}}{{{state['gate_single']['non_spam_to_spam']}}}",

@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code or the paper, please cite the work below."
+title: "Multi-Task PhoBERT for Vietnamese Spam-Review Type Classification: A Controlled Reproduction and a Product-Disjoint Evaluation"
+type: software
+authors:
+  - family-names: "Phan"
+    given-names: "Bá Song Toàn"
+  - family-names: "Trịnh"
+    given-names: "Minh Bảo Trân"
+  - family-names: "Trần"
+    given-names: "Quang Long"
+year: 2026
+keywords:
+  - Vietnamese NLP
+  - spam review detection
+  - PhoBERT
+  - multi-task learning
+  - reproducibility
+abstract: >-
+  A controlled reproduction of Vietnamese spam-review type classification on
+  ViSpamReviews v2, with a locked training protocol, three seeds, a
+  product-disjoint evaluation, a verbatim-duplicate audit and an error
+  decomposition. The hierarchical multi-task objective does not improve
+  macro-F1 over a flat classifier once seeds are averaged.

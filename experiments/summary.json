@@ -3,19 +3,27 @@
     "t1_single_s42",
     "t1_single_s43",
     "t1_single_s44",
+    "t2_multitask_dedup_s42",
     "t2_multitask_disjoint_s42",
+    "t2_multitask_disjoint_s43",
+    "t2_multitask_disjoint_s44",
     "t2_multitask_s42",
     "t2_multitask_s43",
     "t2_multitask_s44",
     "t2_multitask_weighted_s42",
+    "t2_single_dedup_s42",
     "t2_single_disjoint_s42",
+    "t2_single_disjoint_s43",
+    "t2_single_disjoint_s44",
+    "t2_single_len128_s42",
     "t2_single_metadata_s42",
     "t2_single_s42",
     "t2_single_s43",
-    "t2_single_s44"
+    "t2_single_s44",
+    "t2_single_xlmr_s42"
   ],
   "state": {
-    "run_minutes": 8.78176173766454,
+    "run_minutes": 10.046591941515604,
     "single": {
       "acc": 0.9089079013588325,
       "acc_sd": 0.003061279582434947,
@@ -43,18 +51,18 @@
       "f1_sd": 0.0037466270007227255
     },
     "disjoint_single": {
-      "acc": 0.9121381411884205,
-      "acc_sd": 0.0,
-      "f1": 0.7562844760583901,
-      "f1_sd": 0.0,
-      "n": 1
+      "acc": 0.909852717115287,
+      "acc_sd": 0.004180314279622707,
+      "f1": 0.7593898123029468,
+      "f1_sd": 0.010199489165685973,
+      "n": 3
     },
     "disjoint_multi": {
-      "acc": 0.9073133570340274,
-      "acc_sd": 0.0,
-      "f1": 0.7571865841702711,
-      "f1_sd": 0.0,
-      "n": 1
+      "acc": 0.9067208396817336,
+      "acc_sd": 0.0019724361262452653,
+      "f1": 0.7398078862859284,
+      "f1_sd": 0.01513520296089557,
+      "n": 3
     },
     "multi_s42": {
       "acc": 0.9136889783593357,
@@ -65,22 +73,22 @@
       "f1": 0.753531829896724
     },
     "dedupe_single": {
-      "acc": 0.0,
-      "f1": 0.0
+      "acc": 0.9023653749370911,
+      "f1": 0.7347912290929735
     },
     "dedupe_multi": {
-      "acc": 0.0,
-      "f1": 0.0
+      "acc": 0.9066431806743835,
+      "f1": 0.7714930797862896
     },
     "xlmr": {
-      "acc": 0.0,
-      "f1": 0.0
+      "acc": 0.908656265727227,
+      "f1": 0.7642460736299798
     },
     "len128": {
-      "acc": 0.0,
-      "f1": 0.0
+      "acc": 0.912179164569703,
+      "f1": 0.7616760811279865
     },
-    "dedupe_removed": 0,
+    "dedupe_removed": 47,
     "weighted": {
       "acc": 0.8943130347257172,
       "f1": 0.7291020192712614
