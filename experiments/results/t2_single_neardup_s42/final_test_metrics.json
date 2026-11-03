@@ -1,0 +1,171 @@
+{
+  "name": "t2_single_neardup_s42",
+  "config": {
+    "name": "t2_single_neardup_s42",
+    "task": 2,
+    "method": "single",
+    "split": "official",
+    "text_mode": "comment",
+    "type_loss": "ce",
+    "seed": 42,
+    "max_len": 100,
+    "batch_size": 32,
+    "epochs": 10,
+    "encoder_lr": 1e-05,
+    "head_lr": 5e-05,
+    "patience": 3,
+    "dropout": 0.2,
+    "padding": "dynamic",
+    "precision": "bf16",
+    "backbone": "vinai/phobert-base-v2",
+    "dedupe": "near",
+    "normalize": false,
+    "extra": {}
+  },
+  "best_epoch": 6,
+  "best_dev_macro_f1": 0.7068332458275375,
+  "test_accuracy": 0.9046300956215401,
+  "test_macro_f1": 0.7366418431998413,
+  "test_weighted_f1": 0.9034271464709976,
+  "test_loss": 0.36755800892509405,
+  "test_per_class": {
+    "0": {
+      "precision": 0.9428277986990756,
+      "recall": 0.9450926561427591,
+      "f1": 0.9439588688946015,
+      "support": 2914
+    },
+    "1": {
+      "precision": 0.5641025641025641,
+      "recall": 0.4074074074074074,
+      "f1": 0.47311827956989244,
+      "support": 54
+    },
+    "2": {
+      "precision": 0.6632996632996633,
+      "recall": 0.635483870967742,
+      "f1": 0.6490939044481054,
+      "support": 310
+    },
+    "3": {
+      "precision": 0.8675034867503487,
+      "recall": 0.8936781609195402,
+      "f1": 0.8803963198867658,
+      "support": 696
+    }
+  },
+  "confusion_matrix": [
+    [
+      2754,
+      8,
+      87,
+      65
+    ],
+    [
+      14,
+      22,
+      5,
+      13
+    ],
+    [
+      96,
+      0,
+      197,
+      17
+    ],
+    [
+      57,
+      9,
+      8,
+      622
+    ]
+  ],
+  "support": {
+    "0": 2914,
+    "1": 54,
+    "2": 310,
+    "3": 696
+  },
+  "test_binary": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.4039431072078865,
+      "dev_loss": 0.312163803524941,
+      "dev_accuracy": 0.89937106918239,
+      "dev_macro_f1": 0.6065672579237522,
+      "seconds": 68.31100487709045
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.2589793719241476,
+      "dev_loss": 0.28501216808580004,
+      "dev_accuracy": 0.9025157232704403,
+      "dev_macro_f1": 0.6737070714089679,
+      "seconds": 68.21378588676453
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.2103674624098334,
+      "dev_loss": 0.3026470129219991,
+      "dev_accuracy": 0.9012578616352201,
+      "dev_macro_f1": 0.6896388027020519,
+      "seconds": 70.85948920249939
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.16212316853566572,
+      "dev_loss": 0.3301527202504236,
+      "dev_accuracy": 0.9050314465408805,
+      "dev_macro_f1": 0.6807652417960018,
+      "seconds": 73.3390486240387
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.12714989142082717,
+      "dev_loss": 0.3751110293955173,
+      "dev_accuracy": 0.9056603773584906,
+      "dev_macro_f1": 0.7000017414896128,
+      "seconds": 76.57334041595459
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.10056139793101267,
+      "dev_loss": 0.3668035217238672,
+      "dev_accuracy": 0.9037735849056604,
+      "dev_macro_f1": 0.7068332458275375,
+      "seconds": 76.03793668746948
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.08183944657605453,
+      "dev_loss": 0.5035292930045874,
+      "dev_accuracy": 0.8955974842767296,
+      "dev_macro_f1": 0.693922093192554,
+      "seconds": 70.66269636154175
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.0642348484446605,
+      "dev_loss": 0.50532480167143,
+      "dev_accuracy": 0.9031446540880503,
+      "dev_macro_f1": 0.6947368427941562,
+      "seconds": 73.13394737243652
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.05406039374329566,
+      "dev_loss": 0.5781220818207886,
+      "dev_accuracy": 0.9,
+      "dev_macro_f1": 0.6845174586164895,
+      "seconds": 76.10736656188965
+    }
+  ],
+  "train_rows": 14095,
+  "removed_train_rows": 211,
+  "dev_rows": 1590,
+  "test_rows": 3974,
+  "device": "cuda",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 653.2386159896851
+}

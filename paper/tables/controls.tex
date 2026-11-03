@@ -3,22 +3,30 @@
 \label{tab:controls}
 \centering
 \small
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{1.5pt}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 Variant & Seeds & Accuracy & Macro-F1 & $\Delta$ \\
 \midrule
 Single-task (reference) & 3 & 90.89 $\pm$ 0.31 & 76.10 $\pm$ 0.71 & +0.00 \\
 \quad deduplicated & 3 & 90.14 $\pm$ 0.16 & 74.72 $\pm$ 1.34 & -1.38 \\
+\quad near-duplicates out & 1 & 90.46 & 73.66 & -2.44 \\
+\quad normalised text & 1 & 90.71 & 77.56 & +1.46 \\
 \quad XLM-R base & 3 & 90.83 $\pm$ 0.13 & 74.63 $\pm$ 1.55 & -1.47 \\
 \quad 128 tokens & 3 & 90.80 $\pm$ 0.42 & 76.49 $\pm$ 0.46 & +0.39 \\
-\quad single LR & 1 & 90.87 & 74.56 & -1.54 \\
+\quad single LR & 3 & 90.48 $\pm$ 0.73 & 74.41 $\pm$ 0.37 & -1.69 \\
 \midrule
 Multi-task (reference) & 3 & 90.87 $\pm$ 0.45 & 76.02 $\pm$ 0.96 & +0.00 \\
 \quad deduplicated & 3 & 90.75 $\pm$ 0.31 & 77.02 $\pm$ 0.77 & +1.00 \\
-\quad single LR & 1 & 90.84 & 73.19 & -2.83 \\
+\quad near-duplicates out & 1 & 90.94 & 74.46 & -1.56 \\
+\quad normalised text & 1 & 90.14 & 76.21 & +0.19 \\
+\quad single LR & 3 & 90.26 $\pm$ 0.67 & 74.75 $\pm$ 1.65 & -1.27 \\
 \midrule
-Description fusion & 3 & 90.86 $\pm$ 0.36 & 75.98 $\pm$ 1.15 & -0.12 \\
+Fusion, shared encoder & 3 & 90.86 $\pm$ 0.36 & 75.98 $\pm$ 1.15 & -0.12 \\
+Fusion, frozen encoder & 3 & 90.76 $\pm$ 0.31 & 75.95 $\pm$ 0.75 & -0.15 \\
+\midrule
+Category-disjoint, flat & 1 & 90.90 & 72.25 & -- \\
+Category-disjoint, cascade & 1 & 91.19 & 71.59 & -- \\
 \bottomrule
 \end{tabular}
 \end{table}

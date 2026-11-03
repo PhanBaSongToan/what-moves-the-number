@@ -345,6 +345,53 @@ def write_gate_table(state: dict) -> None:
 
 
 
+def per_class_bootstrap(frame, rounds: int = 2000) -> dict:
+    """Bootstrap 95% interval for the F1 of each class."""
+    y_true = frame["y_true"].to_numpy()
+    y_pred = frame["y_pred"].to_numpy()
+    n = len(y_true)
+    out = {}
+    for cls in CLASSES:
+        values = np.empty(rounds)
+        for i in range(rounds):
+            idx = RNG.integers(0, n, n)
+            true = y_true[idx]
+            pred = y_pred[idx]
+            tp = np.sum((pred == cls) & (true == cls))
+            fp = np.sum((pred == cls) & (true != cls))
+            fn = np.sum((pred != cls) & (true == cls))
+            precision = tp / (tp + fp) if tp + fp else 0.0
+            recall = tp / (tp + fn) if tp + fn else 0.0
+            values[i] = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+        out[int(cls)] = (float(np.percentile(values, 2.5)), float(np.percentile(values, 97.5)))
+    return out
+
+
+def split_variance(runs: dict) -> dict:
+    """Per-partition macro-F1 for the product-disjoint evaluation."""
+    single_prefixes = {
+        "42": "t2_single_disjoint_s",
+        "123": "t2_single_disjoint123_s",
+        "456": "t2_single_disjoint456_s",
+    }
+    multi_prefixes = {
+        "42": "t2_multitask_disjoint_s",
+        "123": "t2_multitask_disjoint123_s",
+        "456": "t2_multitask_disjoint456_s",
+    }
+    out = {"single": {}, "multi": {}}
+    for name, prefix in single_prefixes.items():
+        try:
+            out["single"][name] = float(aggregate(runs, prefix)["f1"]["mean"])
+        except KeyError:
+            pass
+    for name, prefix in multi_prefixes.items():
+        try:
+            out["multi"][name] = float(aggregate(runs, prefix)["f1"]["mean"])
+        except KeyError:
+            pass
+    return out
+
 def write_controls_table(state: dict, runs: dict) -> None:
     """Controls that address the remaining validity concerns."""
 
@@ -357,10 +404,10 @@ def write_controls_table(state: dict, runs: dict) -> None:
         except KeyError:
             return None
         mean = agg["f1"]["mean"]
-        delta = 100 * (mean - reference)
+        delta_text = "--" if reference < 0 else f"{100 * (mean - reference):+.2f}"
         return (
             f"{label} & {agg['acc']['n']} & {plus_minus(agg['acc']['mean'], agg['acc']['sd'])} & "
-            f"{plus_minus(mean, agg['f1']['sd'])} & {delta:+.2f} \\\\"
+            f"{plus_minus(mean, agg['f1']['sd'])} & {delta_text} \\\\"
         )
 
     rows = [
@@ -368,15 +415,23 @@ def write_controls_table(state: dict, runs: dict) -> None:
         "\\midrule",
         row("Single-task (reference)", "t2_single_s", single_ref),
         row("\\quad deduplicated", "t2_single_dedup_s", single_ref),
+        row("\\quad near-duplicates out", "t2_single_neardup_s", single_ref),
+        row("\\quad normalised text", "t2_single_norm_s", single_ref),
         row("\\quad XLM-R base", "t2_single_xlmr_s", single_ref),
         row("\\quad 128 tokens", "t2_single_len128_s", single_ref),
         row("\\quad single LR", "t2_single_lr2_s", single_ref),
         "\\midrule",
         row("Multi-task (reference)", "t2_multitask_s", multi_ref),
         row("\\quad deduplicated", "t2_multitask_dedup_s", multi_ref),
+        row("\\quad near-duplicates out", "t2_multitask_neardup_s", multi_ref),
+        row("\\quad normalised text", "t2_multitask_norm_s", multi_ref),
         row("\\quad single LR", "t2_multitask_lr2_s", multi_ref),
         "\\midrule",
-        row("Description fusion", "t2_fusion_s", single_ref),
+        row("Fusion, shared encoder", "t2_fusion_s", single_ref),
+        row("Fusion, frozen encoder", "t2_fusion2_s", single_ref),
+        "\\midrule",
+        row("Category-disjoint, flat", "t2_single_category_s", -1.0),
+        row("Category-disjoint, cascade", "t2_multitask_category_s", -1.0),
     ]
     body = "\n".join(item for item in rows if item)
     caption = (
@@ -391,7 +446,7 @@ def write_controls_table(state: dict, runs: dict) -> None:
         f"\\caption{{{caption}}}\n"
         "\\label{tab:controls}\n"
         "\\centering\n\\small\n"
-        "\\setlength{\\tabcolsep}{3pt}\n"
+        "\\setlength{\\tabcolsep}{1.5pt}\n"
         "\\begin{tabular}{@{}lcccc@{}}\n"
         "\\toprule\n" + body + "\n\\bottomrule\n"
         "\\end{tabular}\n\\end{table}\n"
@@ -402,7 +457,14 @@ def write_controls_table(state: dict, runs: dict) -> None:
 
 def aggregate_mean(runs: dict, prefix: str) -> dict:
     """Mean accuracy and macro-F1 over the runs matching ``prefix``."""
-    agg = aggregate(runs, prefix)
+    try:
+        agg = aggregate(runs, prefix)
+    except KeyError:
+        message = f"no finished run matches {prefix!r}; run experiments/run_all.py first"
+        if os.environ.get("ALLOW_MISSING") != "1":
+            raise SystemExit(message)
+        print("[warn]", message)
+        return {"acc": 0.0, "f1": 0.0, "n": 0}
     return {"acc": agg["acc"]["mean"], "f1": agg["f1"]["mean"], "n": agg["acc"]["n"]}
 
 
@@ -490,6 +552,26 @@ def write_numbers(state: dict) -> None:
         f"\\newcommand{{\\XlmrFone}}{{{pct(state['xlmr']['f1'])}}}",
         f"\\newcommand{{\\LenFone}}{{{pct(state['len128']['f1'])}}}",
         f"\\newcommand{{\\FusionFone}}{{{pct(state['fusion']['f1'])}}}",
+        f"\\newcommand{{\\FusionTwoFone}}{{{pct(state['fusion2']['f1'])}}}",
+        f"\\newcommand{{\\NearSingleFone}}{{{pct(state['near_single']['f1'])}}}",
+        f"\\newcommand{{\\NearMultiFone}}{{{pct(state['near_multi']['f1'])}}}",
+        f"\\newcommand{{\\NormSingleFone}}{{{pct(state['norm_single']['f1'])}}}",
+        f"\\newcommand{{\\NormMultiFone}}{{{pct(state['norm_multi']['f1'])}}}",
+        f"\\newcommand{{\\CategorySingleFone}}{{{pct(state['category_single']['f1'])}}}",
+        f"\\newcommand{{\\CategoryMultiFone}}{{{pct(state['category_multi']['f1'])}}}",
+        f"\\newcommand{{\\NearRemoved}}{{{state.get('near_removed', 0)}}}",
+    ]
+    variance = state.get("split_variance", {})
+    single_values = list(variance.get("single", {}).values())
+    multi_values = list(variance.get("multi", {}).values())
+    calibration_dev = state.get("calibration_dev", {})
+    lines += [
+        f"\\newcommand{{\\SplitSingleMin}}{{{pct(min(single_values)) if single_values else '0.0'}}}",
+        f"\\newcommand{{\\SplitSingleMax}}{{{pct(max(single_values)) if single_values else '0.0'}}}",
+        f"\\newcommand{{\\SplitMultiMin}}{{{pct(min(multi_values)) if multi_values else '0.0'}}}",
+        f"\\newcommand{{\\SplitMultiMax}}{{{pct(max(multi_values)) if multi_values else '0.0'}}}",
+        f"\\newcommand{{\\EceSingleDev}}{{{100 * calibration_dev.get('single', {}).get('ece', 0.0):.1f}}}",
+        f"\\newcommand{{\\EceMultiDev}}{{{100 * calibration_dev.get('multi', {}).get('ece', 0.0):.1f}}}",
         f"\\newcommand{{\\FusionAcc}}{{{pct(state['fusion']['acc'])}}}",
         f"\\newcommand{{\\LrSingleFone}}{{{pct(state['lr_single']['f1'])}}}",
         f"\\newcommand{{\\LrMultiFone}}{{{pct(state['lr_multi']['f1'])}}}",
@@ -617,9 +699,37 @@ def main() -> None:
 
     state["multi_s42"] = single_run_metrics(runs, "t2_multitask_s42")
     state["single_s42"] = single_run_metrics(runs, "t2_single_s42")
+    state["split_variance"] = split_variance(runs)
+    state["dedupe_bootstrap_single"] = (
+        paired_bootstrap("t2_single_s42", "t2_single_dedup_s42")
+        if {"t2_single_s42", "t2_single_dedup_s42"} <= set(runs) else {}
+    )
+    state["dedupe_bootstrap_multi"] = (
+        paired_bootstrap("t2_multitask_s42", "t2_multitask_dedup_s42")
+        if {"t2_multitask_s42", "t2_multitask_dedup_s42"} <= set(runs) else {}
+    )
+    if "t2_single_s42" in runs:
+        state["per_class_ci"] = per_class_bootstrap(predictions("t2_single_s42"))
+    if {"t2_single_cal_s42", "t2_multitask_cal_s42"} <= set(runs):
+        state["calibration_dev"] = {
+            "single": expected_calibration_error(
+                pd.read_csv(os.path.join(RESULTS, "t2_single_cal_s42", "dev_predictions.csv"))
+            ),
+            "multi": expected_calibration_error(
+                pd.read_csv(os.path.join(RESULTS, "t2_multitask_cal_s42", "dev_predictions.csv"))
+            ),
+        }
     state["dedupe_single"] = aggregate_mean(runs, "t2_single_dedup_s")
     state["dedupe_multi"] = aggregate_mean(runs, "t2_multitask_dedup_s")
     state["xlmr"] = aggregate_mean(runs, "t2_single_xlmr_s")
+    state["near_removed"] = runs.get("t2_single_neardup_s42", {}).get("removed_train_rows", 0)
+    state["near_single"] = aggregate_mean(runs, "t2_single_neardup_s")
+    state["near_multi"] = aggregate_mean(runs, "t2_multitask_neardup_s")
+    state["norm_single"] = aggregate_mean(runs, "t2_single_norm_s")
+    state["norm_multi"] = aggregate_mean(runs, "t2_multitask_norm_s")
+    state["fusion2"] = aggregate_mean(runs, "t2_fusion2_s")
+    state["category_single"] = aggregate_mean(runs, "t2_single_category_s")
+    state["category_multi"] = aggregate_mean(runs, "t2_multitask_category_s")
     state["len128"] = aggregate_mean(runs, "t2_single_len128_s")
     state["fusion"] = aggregate_mean(runs, "t2_fusion_s")
     state["lr_single"] = aggregate_mean(runs, "t2_single_lr2_s")

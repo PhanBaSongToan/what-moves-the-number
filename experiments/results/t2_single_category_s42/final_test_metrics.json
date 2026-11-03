@@ -1,0 +1,171 @@
+{
+  "name": "t2_single_category_s42",
+  "config": {
+    "name": "t2_single_category_s42",
+    "task": 2,
+    "method": "single",
+    "split": "category_42",
+    "text_mode": "comment",
+    "type_loss": "ce",
+    "seed": 42,
+    "max_len": 100,
+    "batch_size": 32,
+    "epochs": 10,
+    "encoder_lr": 1e-05,
+    "head_lr": 5e-05,
+    "patience": 3,
+    "dropout": 0.2,
+    "padding": "dynamic",
+    "precision": "bf16",
+    "backbone": "vinai/phobert-base-v2",
+    "dedupe": false,
+    "normalize": false,
+    "extra": {}
+  },
+  "best_epoch": 6,
+  "best_dev_macro_f1": 0.7594211562361319,
+  "test_accuracy": 0.9089655172413793,
+  "test_macro_f1": 0.7224938046082643,
+  "test_weighted_f1": 0.912464762462994,
+  "test_loss": 0.3747138398834344,
+  "test_per_class": {
+    "0": {
+      "precision": 0.9526938239159002,
+      "recall": 0.9413546851330881,
+      "f1": 0.9469903123979537,
+      "support": 4621
+    },
+    "1": {
+      "precision": 0.38181818181818183,
+      "recall": 0.5121951219512195,
+      "f1": 0.43750000000000006,
+      "support": 41
+    },
+    "2": {
+      "precision": 0.5542857142857143,
+      "recall": 0.7220843672456576,
+      "f1": 0.627155172413793,
+      "support": 403
+    },
+    "3": {
+      "precision": 0.9327217125382263,
+      "recall": 0.8299319727891157,
+      "f1": 0.8783297336213103,
+      "support": 735
+    }
+  },
+  "confusion_matrix": [
+    [
+      4350,
+      23,
+      212,
+      36
+    ],
+    [
+      12,
+      21,
+      3,
+      5
+    ],
+    [
+      108,
+      1,
+      291,
+      3
+    ],
+    [
+      96,
+      10,
+      19,
+      610
+    ]
+  ],
+  "support": {
+    "0": 4621,
+    "1": 41,
+    "2": 403,
+    "3": 735
+  },
+  "test_binary": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.4518105351867584,
+      "dev_loss": 0.33777560265696777,
+      "dev_accuracy": 0.8869387755102041,
+      "dev_macro_f1": 0.6202485191616497,
+      "seconds": 64.10846042633057
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.28303747226044046,
+      "dev_loss": 0.2891389268150135,
+      "dev_accuracy": 0.9004081632653061,
+      "dev_macro_f1": 0.7238003528630821,
+      "seconds": 63.89106297492981
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.22911374328739859,
+      "dev_loss": 0.29275838487002315,
+      "dev_accuracy": 0.9,
+      "dev_macro_f1": 0.7180376460094842,
+      "seconds": 63.76870942115784
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.18831612286413765,
+      "dev_loss": 0.3304570386847671,
+      "dev_accuracy": 0.8914285714285715,
+      "dev_macro_f1": 0.7230060996863963,
+      "seconds": 63.905503273010254
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.14073834824887524,
+      "dev_loss": 0.38171636255419983,
+      "dev_accuracy": 0.8934693877551021,
+      "dev_macro_f1": 0.7272512728863014,
+      "seconds": 63.66450333595276
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.10462575703910501,
+      "dev_loss": 0.46617983932397805,
+      "dev_accuracy": 0.8889795918367347,
+      "dev_macro_f1": 0.7594211562361319,
+      "seconds": 62.26715302467346
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0877282012958888,
+      "dev_loss": 0.4912916013020642,
+      "dev_accuracy": 0.8938775510204081,
+      "dev_macro_f1": 0.7265227664316989,
+      "seconds": 63.69117331504822
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.07512360358636974,
+      "dev_loss": 0.564986774389233,
+      "dev_accuracy": 0.889795918367347,
+      "dev_macro_f1": 0.705474033179694,
+      "seconds": 61.014211654663086
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.06252021507736152,
+      "dev_loss": 0.5978586537953542,
+      "dev_accuracy": 0.8861224489795918,
+      "dev_macro_f1": 0.7158535151415902,
+      "seconds": 60.123621702194214
+    }
+  ],
+  "train_rows": 11620,
+  "removed_train_rows": 0,
+  "dev_rows": 2450,
+  "test_rows": 5800,
+  "device": "cuda",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 566.4343991279602
+}

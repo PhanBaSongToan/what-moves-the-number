@@ -205,13 +205,13 @@ textbox(s, Inches(0.9), Inches(2.95), Inches(11.4), Inches(1.0),
 textbox(s, Inches(0.9), Inches(4.5), Inches(11.4), Inches(1.2),
         "Phan Bá Song Toàn  ·  Trịnh Minh Bảo Trân  ·  Trần Quang Long", size=18, bold=True, color=NAVY)
 textbox(s, Inches(0.9), Inches(5.05), Inches(11.4), Inches(0.5),
-        "34 run · 3 seed · một protocol duy nhất · 24 tài liệu tham khảo", size=15, color=GREY)
+        "53 run · 3 seed · một protocol duy nhất · 24 tài liệu tham khảo", size=15, color=GREY)
 textbox(s, Inches(0.9), Inches(6.55), Inches(11.4), Inches(0.4),
         "Câu hỏi của bài: trong bài toán này, lựa chọn nào thực sự làm thay đổi điểm số?", size=15,
         color=BLUE)
 notes(s, "Chào thầy/cô và các bạn. Bài báo của nhóm đặt một câu hỏi rất cụ thể: trong bài toán "
          "phân loại review rác tiếng Việt, yếu tố nào thực sự làm thay đổi điểm macro-F1 — kiến trúc "
-         "mô hình, hay cách xây dựng tập đánh giá? Nhóm chạy 34 cấu hình dưới cùng một protocol để "
+         "mô hình, hay cách xây dựng tập đánh giá? Nhóm chạy 53 cấu hình dưới cùng một protocol để "
          "trả lời câu hỏi đó bằng số liệu chứ không bằng cảm nhận.")
 
 # ---------------------------------------------------------------- 2. problem
@@ -334,7 +334,7 @@ notes(s, "Slide này để thầy thấy nhóm biết mình đang ở đâu. Ý 
 
 # ---------------------------------------------------------------- 7. protocol
 s = slide()
-header(s, "Một protocol duy nhất cho 34 run", "Phương pháp", 7)
+header(s, "Một protocol duy nhất cho 53 run", "Phương pháp", 7)
 table(s, [
     ["Thành phần", "Giá trị", "Vì sao quan trọng"],
     ["Encoder", "PhoBERT-base-v2 (135M)", "Giữ nguyên cho mọi run"],
@@ -672,7 +672,7 @@ notes(s, "Ba can thiệp đều là những ý tưởng hợp lý mà ai cũng n
 s = slide()
 header(s, "Vì sao tin được những con số này?", "Tái lập")
 bullets(s, [
-    (0, "34 cấu hình trong bài, mỗi run lưu đủ config, log, metrics và dự đoán từng dòng", True),
+    (0, "53 cấu hình, mỗi run lưu đủ config, log, metrics và dự đoán từng dòng", True),
     (0, "3 seed + bootstrap + McNemar thay vì một con số duy nhất"),
     (0, "Split dựng lại từ script cho ra đúng cùng một partition"),
     (0, "CI tự động kiểm bảng trong bài khớp kết quả, và build lại PDF"),
@@ -710,7 +710,7 @@ textbox(s, Inches(0.75), Inches(5.72), Inches(11.9), Inches(0.6),
         "Câu hỏi không phải “mô hình nào tốt hơn”, mà là “đo bằng thước nào”.",
         size=22, bold=True, color=WHITE)
 textbox(s, Inches(0.75), Inches(6.7), Inches(11.9), Inches(0.4),
-        "Mã nguồn + 34 run + PDF: github.com/PhanBaSongToan/what-moves-the-number",
+        "Mã nguồn + 53 run + PDF: github.com/PhanBaSongToan/what-moves-the-number",
         size=13, color=GREY)
 notes(s, "Kết lại: nếu chỉ mang về một câu, đó là câu ở dải xanh — câu hỏi đúng không phải mô hình nào "
          "tốt hơn, mà là đo bằng thước nào. Nhóm sẵn sàng nhận câu hỏi.")

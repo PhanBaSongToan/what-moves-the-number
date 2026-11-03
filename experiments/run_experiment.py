@@ -29,6 +29,8 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModel, AutoModelForSequenceClassification, AutoTokenizer
+
+import augment
 import config
 
 CHECKPOINT = "vinai/phobert-base-v2"
@@ -65,13 +67,74 @@ def _read_disjoint(data_dir: str) -> dict[str, pd.DataFrame]:
 
 
 def load_split(split: str) -> dict[str, pd.DataFrame]:
+    """``official``, ``disjoint``, ``disjoint_<seed>`` or ``category_<seed>``."""
     key = f"split::{split}"
     if key not in _CACHE:
         if split == "official":
             _CACHE[key] = _read_official(DEFAULT_ZIP())
+        elif split.startswith("disjoint_"):
+            seed = split.split("_", 1)[1]
+            _CACHE[key] = _read_disjoint(
+                os.path.join(config.DATA_DIR, f"product_disjoint_split_seed{seed}")
+            )
+        elif split.startswith("category_"):
+            seed = split.split("_", 1)[1]
+            _CACHE[key] = _read_disjoint(
+                os.path.join(config.DATA_DIR, f"category_disjoint_split_seed{seed}")
+            )
         else:
             _CACHE[key] = _read_disjoint(DEFAULT_DISJOINT())
     return _CACHE[key]
+
+
+
+_DESC_CACHE: dict[str, dict] = {}
+
+
+def description_embeddings(split: str, backbone: str, max_len: int) -> dict:
+    """Mean-pooled, frozen PhoBERT vectors for every product description."""
+    key = f"{split}::{backbone}::{max_len}"
+    if key in _DESC_CACHE:
+        return _DESC_CACHE[key]
+
+    cache_dir = os.path.join(config.DATA_DIR, "cache")
+    os.makedirs(cache_dir, exist_ok=True)
+    safe = backbone.replace("/", "_")
+    path = os.path.join(cache_dir, f"desc_{split}_{safe}_{max_len}.npz")
+
+    if os.path.exists(path):
+        loaded = np.load(path)
+        out = {name: loaded[name] for name in loaded.files}
+    else:
+        frames = load_split(split)
+        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=False)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        encoder = AutoModel.from_pretrained(backbone).to(device).eval()
+        out = {}
+        for name, frame in frames.items():
+            texts = frame["description"].fillna("").astype(str).tolist()
+            chunks = []
+            with torch.no_grad():
+                for start in range(0, len(texts), 64):
+                    batch = tokenizer(
+                        texts[start : start + 64],
+                        truncation=True,
+                        padding=True,
+                        max_length=max_len,
+                        return_tensors="pt",
+                    )
+                    batch = {k: v.to(device) for k, v in batch.items()}
+                    hidden = encoder(**batch).last_hidden_state
+                    mask = batch["attention_mask"].unsqueeze(-1).float()
+                    pooled = (hidden * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-6)
+                    chunks.append(pooled.cpu().numpy())
+            out[name] = np.concatenate(chunks).astype(np.float32)
+        np.savez(path, **out)
+        del encoder
+        torch.cuda.empty_cache()
+
+    _DESC_CACHE[key] = out
+    return out
 
 
 def build_text(row, text_mode: str) -> str:
@@ -84,9 +147,13 @@ def build_text(row, text_mode: str) -> str:
 
 
 def encode_split(
-    split: str, text_mode: str, backbone: str = CHECKPOINT, max_len: int = MAX_LEN
+    split: str,
+    text_mode: str,
+    backbone: str = CHECKPOINT,
+    max_len: int = MAX_LEN,
+    normalize: bool = False,
 ) -> dict[str, dict]:
-    key = f"{split}::{text_mode}::{backbone}::{max_len}"
+    key = f"{split}::{text_mode}::{backbone}::{max_len}::{normalize}"
     if key in _TOKEN_CACHE:
         return _TOKEN_CACHE[key]
 
@@ -100,6 +167,8 @@ def encode_split(
         else:
             texts = [build_text(row, text_mode) for _, row in frame.iterrows()]
             descriptions = None
+        if normalize:
+            texts = [augment.normalize_text(item) for item in texts]
         batch = tokenizer(texts, truncation=True, max_length=max_len)
         encoded[name] = {
             "input_ids": batch["input_ids"],
@@ -119,18 +188,29 @@ def encode_split(
     return encoded
 
 
-def apply_dedupe(data: dict[str, dict]) -> tuple[dict[str, dict], int]:
-    """Drop training rows whose review text also occurs in the test split.
+def apply_dedupe(
+    data: dict[str, dict], mode: str = "exact", threshold: float = 0.8
+) -> tuple[dict[str, dict], int]:
+    """Drop training rows that duplicate a test review.
 
-    Removes the verbatim leakage documented in the paper so that the same
-    configuration can be re-run on a text-disjoint training set.
+    ``mode="exact"`` removes verbatim copies (the leakage measured in the paper);
+    ``mode="near"`` also removes rows whose character 3-gram Jaccard similarity
+    with a test review is at least ``threshold``.
     """
 
     def normalise(text: str) -> str:
         return re.sub(r"\s+", " ", str(text)).strip().lower()
 
-    test_texts = {normalise(text) for text in data["test"]["comment"]}
-    keep = [i for i, text in enumerate(data["train"]["comment"]) if normalise(text) not in test_texts]
+    if mode == "near":
+        flagged = augment.near_duplicate_indices(
+            [str(item) for item in data["train"]["comment"]],
+            [str(item) for item in data["test"]["comment"]],
+            threshold=threshold,
+        )
+        keep = [i for i in range(len(data["train"]["comment"])) if i not in flagged]
+    else:
+        test_texts = {normalise(text) for text in data["test"]["comment"]}
+        keep = [i for i, text in enumerate(data["train"]["comment"]) if normalise(text) not in test_texts]
     filtered = dict(data)
     filtered["train"] = {
         key: [value[i] for i in keep] for key, value in data["train"].items()
@@ -144,6 +224,7 @@ class ReviewDataset(Dataset):
         self.mask = split_data["attention_mask"]
         self.desc_ids = split_data.get("desc_input_ids")
         self.desc_mask = split_data.get("desc_mask")
+        self.desc_emb = split_data.get("desc_emb")
         if task == 1:
             self.labels = split_data["binary_label"]
             self.binary = self.labels
@@ -167,6 +248,8 @@ class ReviewDataset(Dataset):
         if self.desc_ids is not None:
             item["desc_input_ids"] = self.desc_ids[index]
             item["desc_mask"] = self.desc_mask[index]
+        if self.desc_emb is not None:
+            item["desc_emb"] = self.desc_emb[index]
         return item
 
 
@@ -196,6 +279,10 @@ def collate(batch: list[dict]) -> dict[str, torch.Tensor]:
             desc_mask[row, :length] = torch.tensor(item["desc_mask"], dtype=torch.long)
         collated["desc_input_ids"] = desc_ids
         collated["desc_mask"] = desc_mask
+    if "desc_emb" in batch[0]:
+        collated["desc_emb"] = torch.tensor(
+            [item["desc_emb"] for item in batch], dtype=torch.float32
+        )
     return collated
 
 
@@ -222,13 +309,18 @@ class FusionPhoBERT(nn.Module):
         hidden = self.encoder.config.hidden_size
         self.head = nn.Sequential(nn.Dropout(dropout), nn.Linear(2 * hidden, 4))
 
-    def forward(self, input_ids, attention_mask, desc_input_ids=None, desc_mask=None):
+    def forward(
+        self, input_ids, attention_mask, desc_input_ids=None, desc_mask=None, desc_emb=None
+    ):
         comment = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state[:, 0]
-        description = self.encoder(
-            input_ids=desc_input_ids, attention_mask=desc_mask
-        ).last_hidden_state
-        weight = desc_mask.unsqueeze(-1).float()
-        pooled = (description * weight).sum(dim=1) / weight.sum(dim=1).clamp(min=1e-6)
+        if desc_emb is not None:
+            pooled = desc_emb
+        else:
+            description = self.encoder(
+                input_ids=desc_input_ids, attention_mask=desc_mask
+            ).last_hidden_state
+            weight = desc_mask.unsqueeze(-1).float()
+            pooled = (description * weight).sum(dim=1) / weight.sum(dim=1).clamp(min=1e-6)
         return self.head(torch.cat([comment, pooled], dim=1))
 
 
@@ -257,7 +349,8 @@ class Config:
     padding: str = "dynamic"
     precision: str = "bf16"
     backbone: str = CHECKPOINT
-    dedupe: bool = False
+    dedupe: bool | str = False
+    normalize: bool = False
     extra: dict = field(default_factory=dict)
 
 
@@ -277,7 +370,7 @@ def set_seed(seed: int) -> None:
 
 
 def build_optimizer(model: nn.Module, cfg: Config, method: str) -> torch.optim.Optimizer:
-    if method in ("multitask", "fusion"):
+    if method in ("multitask", "fusion", "fusion2"):
         encoder = [p for p in model.encoder.parameters()]
         encoder_ids = {id(p) for p in encoder}
         heads = [p for p in model.parameters() if id(p) not in encoder_ids]
@@ -309,10 +402,12 @@ def evaluate(model, loader, device, task: int, method: str, precision: str = "bf
         if "desc_input_ids" in batch:
             inputs["desc_input_ids"] = batch["desc_input_ids"].to(device)
             inputs["desc_mask"] = batch["desc_mask"].to(device)
+        if "desc_emb" in batch:
+            inputs["desc_emb"] = batch["desc_emb"].to(device)
         with autocast(use_amp):
             if method == "multitask":
                 binary_logits, type_logits = model(**inputs)
-            elif method == "fusion":
+            elif method in ("fusion", "fusion2"):
                 logits = model(**inputs)
             else:
                 logits = model(**inputs).logits
@@ -394,14 +489,21 @@ def run(cfg: Config) -> dict:
     print(f"\n=== {cfg.name} ===")
     print(json.dumps(asdict(cfg), ensure_ascii=False))
 
-    data = encode_split(cfg.split, cfg.text_mode, cfg.backbone, cfg.max_len)
+    data = encode_split(cfg.split, cfg.text_mode, cfg.backbone, cfg.max_len, cfg.normalize)
+    if cfg.method == "fusion2":
+        embeddings = description_embeddings(cfg.split, cfg.backbone, cfg.max_len)
+        data = {
+            name: {**part, "desc_emb": [row.tolist() for row in embeddings[name]]}
+            for name, part in data.items()
+        }
     removed = 0
     if cfg.dedupe:
-        data, removed = apply_dedupe(data)
+        mode = "near" if cfg.dedupe == "near" else "exact"
+        data, removed = apply_dedupe(data, mode=mode)
 
     if cfg.method == "multitask":
         model = MultiTaskPhoBERT(cfg.dropout, cfg.backbone).to(device)
-    elif cfg.method == "fusion":
+    elif cfg.method in ("fusion", "fusion2"):
         model = FusionPhoBERT(cfg.dropout, cfg.backbone).to(device)
     else:
         num_labels = 2 if cfg.task == 1 else 4
@@ -458,13 +560,17 @@ def run(cfg: Config) -> dict:
                     loss = ce(binary_logits.float(), binary_y)
                     if mask.any():
                         loss = loss + type_ce(type_logits.float()[mask], batch_gpu["spam_type"][mask])
-                elif cfg.method == "fusion":
-                    logits = model(
-                        input_ids=batch_gpu["input_ids"],
-                        attention_mask=batch_gpu["attention_mask"],
-                        desc_input_ids=batch_gpu["desc_input_ids"],
-                        desc_mask=batch_gpu["desc_mask"],
-                    )
+                elif cfg.method in ("fusion", "fusion2"):
+                    kwargs = {
+                        "input_ids": batch_gpu["input_ids"],
+                        "attention_mask": batch_gpu["attention_mask"],
+                    }
+                    if "desc_emb" in batch_gpu:
+                        kwargs["desc_emb"] = batch_gpu["desc_emb"]
+                    else:
+                        kwargs["desc_input_ids"] = batch_gpu["desc_input_ids"]
+                        kwargs["desc_mask"] = batch_gpu["desc_mask"]
+                    logits = model(**kwargs)
                     loss = ce(logits.float(), batch_gpu["labels"])
                 else:
                     logits = model(
@@ -512,6 +618,8 @@ def run(cfg: Config) -> dict:
                 break
 
     model.load_state_dict(best_state)
+    dev_final = evaluate(model, dev_loader, device, cfg.task, cfg.method, cfg.precision)
+    dev_arrays = dev_final.pop("_arrays")
     test = evaluate(model, test_loader, device, cfg.task, cfg.method, cfg.precision)
     arrays = test.pop("_arrays")
     summary = {
@@ -552,6 +660,18 @@ def run(cfg: Config) -> dict:
         frame["p2"] = [row[2] for row in arrays["probs"]]
         frame["p3"] = [row[3] for row in arrays["probs"]]
     frame.to_csv(os.path.join(out_dir, "test_predictions.csv"), index=False, encoding="utf-8-sig")
+
+    dev_frame = pd.DataFrame(
+        {
+            "y_true": dev_arrays["true"],
+            "y_pred": dev_arrays["pred"],
+            "comment": [c[:400] for c in data["dev"]["comment"]],
+        }
+    )
+    if dev_arrays["probs"]:
+        for index in range(4):
+            dev_frame[f"p{index}"] = [row[index] for row in dev_arrays["probs"]]
+    dev_frame.to_csv(os.path.join(out_dir, "dev_predictions.csv"), index=False, encoding="utf-8-sig")
 
     print(
         f"test accuracy={test['accuracy']:.4f} macro_f1={test['macro_f1']:.4f}"

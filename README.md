@@ -67,7 +67,7 @@ metrics, the PDF was a stale IEEEtran build of a one-author version while the so
 an LNCS draft with three authors, and the draft cited the wrong first author for the
 reference paper. The current version addresses all of that:
 
-* one locked protocol for every model (`experiments/run_experiment.py`), 34 runs;
+* one locked protocol for every model (`experiments/run_experiment.py`), 53 runs;
 * three seeds for the headline comparison, paired bootstrap and McNemar test;
 * both models evaluated on the product-disjoint split over three seeds;
 * controls that answer the obvious objections: text-deduplicated training data, an XLM-R
@@ -89,19 +89,31 @@ reference paper. The current version addresses all of that:
 | Multi-task PhoBERT, official split (3 seeds) | 76.02 ± 0.96 |
 | Single-task, product-disjoint (3 seeds) | 75.94 |
 | Multi-task, product-disjoint (3 seeds) | 73.98 |
-| Single-task, text-deduplicated training (3 seeds) | 74.72 ± 1.34 |
-| Multi-task, text-deduplicated training (3 seeds) | 77.02 ± 0.77 |
-| Description fusion, second encoder pass (3 seeds) | 75.98 ± 1.15 |
+| Single-task, text-deduplicated (3 seeds) | 74.72 ± 1.34 |
+| Multi-task, text-deduplicated (3 seeds) | 77.02 ± 0.77 |
+| Single-task, near-duplicates removed | 73.66 |
+| Multi-task, near-duplicates removed | 74.46 |
+| Single-task, teencode normalised | **77.56** |
+| Multi-task, teencode normalised | 76.21 |
+| Fusion, shared encoder (3 seeds) | 75.98 ± 1.15 |
+| Fusion, frozen encoder (3 seeds) | 75.95 ± 0.75 |
 | Single-task, XLM-R backbone (3 seeds) | 74.63 ± 1.55 |
 | Single-task, 128-token window (3 seeds) | 76.49 ± 0.46 |
-| Single-task, single learning rate 2e-5 | 74.56 |
-| Multi-task, single learning rate 2e-5 | 73.19 |
+| Single-task, single learning rate (3 seeds) | 74.41 ± 0.37 |
+| Multi-task, single learning rate (3 seeds) | 74.75 ± 1.65 |
+| Category-disjoint, single-task | 72.25 |
+| Category-disjoint, multi-task | 71.59 |
 | Seed noise (standard deviation) | 0.71 / 0.96 |
 
+The product-disjoint split is one draw: two further partitions move the flat
+model between 75.22 and 75.94 and the cascade between 73.98 and 77.37 — the
+partition alone is worth almost three points on the cascade.
+
 The hierarchy gives no gain on the official split, is behind on unseen products, and is
-ahead once duplicated training text is removed. Metadata that is not truncated still adds
-nothing, and the backbone matters more than the objective. The conclusion is that the
-ranking depends on how the evaluation is built.
+ahead once duplicated training text is removed. Metadata never helps, the backbone matters
+more than the objective, and the only intervention that clearly helps is text normalisation
+(+1.46 for the flat model). The conclusion is that the ranking depends on how the
+evaluation is built.
 
 The full audit is in `review_20261103/BAO_CAO_KIEM_TRA_BAI_BAO.md` (Vietnamese).
 
