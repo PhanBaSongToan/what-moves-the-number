@@ -81,7 +81,7 @@ Mỗi run ghi ra một thư mục riêng và **không ghi đè** run khác; ch�
 
 ## Vì sao trước đây trông rối
 
-Pipeline cũ bị chia thành `run_matrix.py` (13 run), `run_extra.py` (8), `run_final.py` (13), `run_closure.py` (19) — vì các đợt thí nghiệm được thêm dần theo thời gian. Cùng một việc nhưng bốn chỗ khai báo. Giờ **chỉ còn `jobs.py`**; ba file đầu đã xoá, `run_closure.py` sẽ xoá khi đợt chạy hiện tại kết thúc.
+Pipeline cũ bị chia thành `run_matrix.py` (13 run), `run_extra.py` (8), `run_final.py` (13), `run_closure.py` (19) — vì các đợt thí nghiệm được thêm dần theo thời gian. Cùng một việc nhưng bốn chỗ khai báo. Giờ **chỉ còn `jobs.py`**; cả bốn file cũ đã xoá.
 
 ## Kiểm tra nhanh
 
