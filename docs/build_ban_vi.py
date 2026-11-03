@@ -231,7 +231,10 @@ h2("III.2. Bản công khai và bản đã công bố")
 p("Chúng tôi dùng bản công khai của ViSpamReviews v2. Bảng II so bản này với cách chia mô tả trong bài công bố. "
   "Số dòng khác ở mọi split (14.306 / 1.590 / 3.974 so với 14.284 / 1.589 / 3.963), và số dòng từng lớp trên "
   "test cũng khác (2.914 / 54 / 310 / 696 so với 2.911 / 54 / 309 / 689). Hai bản không phải cùng một snapshot, "
-  "nên việc tái lập phải được đọc là tái lập gần đúng, không phải chạy lại chính xác. Chúng tôi không so độ dài "
+  "nên việc tái lập phải được đọc là tái lập gần đúng, không phải chạy lại chính xác. Repo của tác giả đăng hai "
+  "archive, v1 và v2, cả hai đều 14.306 / 1.590 / 3.974 dòng nhưng nhãn test khác nhau (2.867/61/319/727 ở v1 và "
+  "2.914/54/310/696 ở v2); không bản nào khớp 2.911/54/309/689 đã công bố, nên split công bố không thể phục hồi "
+  "từ các artefact công khai. Chúng tôi không so độ dài "
   "trung bình giữa hai bản, vì thống kê công bố tính sau tách từ tiếng Việt còn của chúng tôi đếm token theo "
   "khoảng trắng; hai đơn vị không quy đổi được cho nhau.")
 caption("Bảng II. Bản công khai dùng ở đây so với cách chia trong bài công bố.")
