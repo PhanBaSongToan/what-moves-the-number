@@ -7,10 +7,8 @@ Everything that produces a number in `../paper/paper.tex` lives here.
 | File | Role |
 |---|---|
 | `run_experiment.py` | Trains one model. The only place a model is defined; every reported run goes through it. |
-| `run_all.py` | Runs every configuration (matrix + extras + final), then the analysis. |
-| `run_matrix.py` | Core 13 configurations. |
-| `run_extra.py` | Disjoint seeds, dedupe control, XLM-R, window control. |
-| `run_final.py` | Fusion baseline, remaining seeds, learning-rate control. |
+| `jobs.py` | **The registry**: all 53 runs, grouped by purpose (main, task1, split, control, ablation, calibration). |
+| `run_all.py` | **The entry point**: runs a selection and then regenerates the paper artefacts. |
 | `config.py` | Resolves the dataset paths from `VISPAM_ZIP` / `VISPAM_DISJOINT_DIR` or `data/`. |
 | `analyze_results.py` | Turns `results/` into `../paper/numbers.tex`, `tables/*.tex`, `figures/*.pdf` and `summary.json`. |
 | `experiment_stats.py` | Aggregation and error-decomposition helpers. |
@@ -53,12 +51,14 @@ pip install -r requirements.txt
 # or point VISPAM_ZIP at it (see config.py)
 python build_product_disjoint_split.py
 
-python run_all.py        # 34 configurations, then every table, figure and number
+python run_all.py                 # 53 configurations, then every table, figure and number
+python run_all.py --group main    # only the headline comparison
+python run_all.py --list          # what would run
+python run_all.py --only t2_single_s42
 ```
 
-`run_all.py` resumes: finished runs are skipped. `run_experiment.py` can also be
-driven directly, and `run_matrix.py --only t2_single_s42` runs one configuration
-while `--smoke` does a 256-row, one-epoch sanity pass.
+`run_all.py` resumes: finished runs are skipped, so it is safe to interrupt and
+restart. See `PIPELINE.md` for the end-to-end flow and the file map.
 
 `analyze_results.py` refuses to write a table when a run is missing, unless
 `ALLOW_MISSING=1` is set: a silent 0.00 in a paper is worse than a failed build.
