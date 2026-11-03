@@ -506,7 +506,8 @@ notes(s, "Mô hình phẳng: PhoBERT + một lớp linear 4 đầu ra. Mô hình
 
 # ---------------------------------------------------------------- reproduction
 s = slide()
-header(s, "Tái lập: khớp về độ lớn, không khớp tuyệt đối", "Kết quả")
+header(s, "Tái lập: khớp về độ lớn, không khớp tuyệt đối",
+       "Kết quả · 1. Chạy lại bài gốc có ra đúng 71,56?")
 table(s, [
     ["Cấu hình", "Task 1 (Acc / F1)", "Task 2 (Acc / F1)"],
     ["Bài gốc công bố", "89,23 / 85,58", "87,79 / 71,56"],
@@ -532,7 +533,8 @@ notes(s, "Đây là câu hỏi đầu tiên trong bốn câu hỏi nghiên cứu
 
 # ---------------------------------------------------------------- 12. main result
 s = slide()
-header(s, "Kết quả chính: hai mô hình gần như bằng nhau", "Kết quả", 12)
+header(s, "Kết quả chính: hai mô hình gần như bằng nhau",
+       "Kết quả · 2. Đa tác vụ có hơn mô hình phẳng?", 12)
 table(s, [
     ["Mô hình", "Seed", "Accuracy", "Macro-F1"],
     ["Phẳng (flat)", "3", "90,89 ± 0,31", "76,10 ± 0,71"],
@@ -551,7 +553,8 @@ notes(s, "Đây là kết quả gây bất ngờ nhất: mô hình phức tạp 
 
 # ---------------------------------------------------------------- 13. statistics
 s = slide()
-header(s, "Không khác nhau về điểm, nhưng sai khác nhau", "Kết quả", 13)
+header(s, "Không khác nhau về điểm, nhưng sai khác nhau",
+       "Kết quả · 2b. Bằng điểm thì có phải giống nhau?", 13)
 bullets(s, [
     (0, "Bootstrap 10.000 lần: chênh lệch −0,08 pp, CI chứa 0", True),
     (0, "McNemar trên 147 dòng bất đồng: p = 0,047"),
@@ -572,7 +575,8 @@ notes(s, "Cần phân biệt hai loại kiểm định. Bootstrap trả lời: �
 
 # ---------------------------------------------------------------- 14. effects
 s = slide()
-header(s, "Cái gì thực sự làm thay đổi điểm?", "Kết quả", 14)
+header(s, "Cái gì thực sự làm thay đổi điểm?",
+       "Kết quả · 3. Nếu không phải kiến trúc, vậy cái gì?", 14)
 chart_data = CategoryChartData()
 # PowerPoint plots the first category at the bottom, so the list is built
 # bottom-up: the seed-noise reference sits at the bottom, the largest mover on top.
@@ -618,7 +622,8 @@ notes(s, "Đây là slide quan trọng nhất của bài. Đọc từ trên xu�
 
 # ---------------------------------------------------------------- 15. reversal
 s = slide()
-header(s, "Đảo chiều khi đổi cách chấm", "Kết quả", 15)
+header(s, "Đảo chiều khi đổi cách chấm",
+       "Kết quả · 3b. Kết luận đó có bền không?", 15)
 table(s, [
     ["Cách đánh giá", "Phẳng", "Đa tác vụ", "Kết luận"],
     ["Split gốc, 3 seed", "76,10", "76,02", "Hòa"],
@@ -637,7 +642,8 @@ notes(s, "Đây là bằng chứng mạnh nhất cho luận điểm của bài. 
 
 # ---------------------------------------------------------------- remaining controls
 s = slide()
-header(s, "Ba đối chứng còn lại — và một can thiệp có tác dụng", "Kết quả")
+header(s, "Ba đối chứng còn lại — và một can thiệp có tác dụng",
+       "Kết quả · 3c. Còn cách kiểm tra nào khác?")
 table(s, [
     ["Đối chứng", "Phẳng", "Đa tác vụ", "So với chuẩn"],
     ["Bỏ 211 dòng gần trùng", "73,66", "74,46", "−2,44 / −1,56"],
@@ -657,7 +663,8 @@ notes(s, "Hai đối chứng đầu là về dữ liệu. Bỏ gần trùng làm
 
 # ---------------------------------------------------------------- 16. errors
 s = slide()
-header(s, "Lỗi nằm ở đâu: bỏ sót rác, không phải nhầm loại", "Phân tích lỗi", 16)
+header(s, "Lỗi nằm ở đâu: bỏ sót rác, không phải nhầm loại",
+       "Phân tích lỗi · 4. Mô hình sai ở đâu?", 16)
 s.shapes.add_picture(os.path.join(ASSETS, "confusion.png"), Inches(0.6), Inches(1.7),
                      width=Inches(7.5))
 table(s, [
@@ -678,7 +685,8 @@ notes(s, "Nhìn ma trận: hàng Spam-2 có 37% bị đoán thành non-spam. Ng�
 
 # ---------------------------------------------------------------- 17. label noise
 s = slide()
-header(s, "Nhiễu nhãn: khi người thật dùng văn mẫu", "Phân tích lỗi", 17)
+header(s, "Nhiễu nhãn: khi người thật dùng văn mẫu",
+       "Phân tích lỗi · 4b. Lỗi đó có phải của mô hình?", 17)
 bullets(s, [
     (0, "9,4% false positive chứa cụm “chất lượng sản phẩm tuyệt vời”", True),
     (0, "Cụm này có trong 21,8% review Spam-1 của train"),
@@ -705,7 +713,8 @@ notes(s, "Ví dụ này rất dễ gây tranh luận, nên nói rõ: đây là b
 
 # ---------------------------------------------------------------- 18. negative results
 s = slide()
-header(s, "Kết quả âm: ba can thiệp hợp lý đều không giúp", "Kết quả", 18)
+header(s, "Kết quả âm: ba can thiệp hợp lý đều không giúp",
+       "Kết quả · 5. Vậy có cách nào cải thiện?", 18)
 table(s, [
     ["Can thiệp", "Macro-F1", "So với chuẩn"],
     ["Đa tác vụ (chuẩn, seed 42)", "77,10", "—"],
@@ -728,7 +737,8 @@ notes(s, "Ba can thiệp đều là những ý tưởng hợp lý mà ai cũng n
 
 # ---------------------------------------------------------------- reproducibility
 s = slide()
-header(s, "Vì sao tin được những con số này?", "Tái lập")
+header(s, "Vì sao tin được những con số này?",
+       "Tái lập · 6. Làm sao tin được các con số?")
 bullets(s, [
     (0, "53 cấu hình, mỗi run lưu đủ config, log, metrics và dự đoán từng dòng", True),
     (0, "3 seed + bootstrap + McNemar thay vì một con số duy nhất"),
@@ -744,7 +754,8 @@ notes(s, "Nếu thầy hỏi làm sao tin: mỗi run lưu đủ để chạy l�
 
 # ---------------------------------------------------------------- 19. conclusion
 s = slide()
-header(s, "Hạn chế, kết luận và những gì còn mở", "Kết luận", 19)
+header(s, "Hạn chế, kết luận và những gì còn mở",
+       "Kết luận · 6b. Còn gì hở?", 19)
 textbox(s, Inches(0.75), Inches(1.75), Inches(5.6), Inches(0.4), "Bốn hạn chế đã biết", size=18,
         bold=True, color=RED)
 bullets(s, [
