@@ -5,9 +5,10 @@ import unicodedata
 import zipfile
 
 import pandas as pd
+import config
 
-ZIP_PATH = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
-OUT = r"C:\Users\ACER\Downloads\vispam_outputs\dataset_audit"
+ZIP_PATH = config.dataset_zip()
+OUT = config.audit_dir()
 
 
 def norm(x):

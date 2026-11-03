@@ -7,7 +7,7 @@ import zipfile
 
 import pandas as pd
 
-ZIP = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
+ZIP = config.dataset_zip()
 
 with zipfile.ZipFile(ZIP) as handle:
     train = pd.read_csv(handle.open("train.csv"))
@@ -50,3 +50,4 @@ report = {
 print(json.dumps(report, indent=2))
 with open("experiments/extra_stats.json", "w", encoding="utf-8") as handle:
     json.dump(report, handle, indent=2, ensure_ascii=False)
+import config

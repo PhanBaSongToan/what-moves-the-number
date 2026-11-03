@@ -29,15 +29,11 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModel, AutoModelForSequenceClassification, AutoTokenizer
+import config
 
 CHECKPOINT = "vinai/phobert-base-v2"
-DEFAULT_ZIP = os.environ.get(
-    "VISPAM_ZIP", r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
-)
-DEFAULT_DISJOINT = os.environ.get(
-    "VISPAM_DISJOINT_DIR",
-    r"C:\Users\ACER\Downloads\vispam_outputs\product_disjoint_split_seed42",
-)
+DEFAULT_ZIP = config.dataset_zip
+DEFAULT_DISJOINT = config.disjoint_dir
 RESULT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
 
 MAX_LEN = 100
@@ -72,9 +68,9 @@ def load_split(split: str) -> dict[str, pd.DataFrame]:
     key = f"split::{split}"
     if key not in _CACHE:
         if split == "official":
-            _CACHE[key] = _read_official(DEFAULT_ZIP)
+            _CACHE[key] = _read_official(DEFAULT_ZIP())
         else:
-            _CACHE[key] = _read_disjoint(DEFAULT_DISJOINT)
+            _CACHE[key] = _read_disjoint(DEFAULT_DISJOINT())
     return _CACHE[key]
 
 

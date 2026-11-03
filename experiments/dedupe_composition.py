@@ -9,7 +9,7 @@ import zipfile
 
 import pandas as pd
 
-ZIP = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
+ZIP = config.dataset_zip()
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESULT = os.path.join(HERE, "results", "t2_single_dedup_s42", "final_test_metrics.json")
 
@@ -46,3 +46,4 @@ if os.path.exists(RESULT):
     report["dedup_test_macro_f1"] = metrics["test_macro_f1"]
 
 print(json.dumps(report, indent=2, ensure_ascii=False))
+import config

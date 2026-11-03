@@ -7,7 +7,11 @@ Everything that produces a number in `../paper/paper.tex` lives here.
 | File | Role |
 |---|---|
 | `run_experiment.py` | Trains one model. The only place a model is defined; every reported run goes through it. |
-| `run_matrix.py` | Runs the 13 configurations of the paper sequentially on one GPU. |
+| `run_all.py` | Runs every configuration (matrix + extras + final), then the analysis. |
+| `run_matrix.py` | Core 13 configurations. |
+| `run_extra.py` | Disjoint seeds, dedupe control, XLM-R, window control. |
+| `run_final.py` | Fusion baseline, remaining seeds, learning-rate control. |
+| `config.py` | Resolves the dataset paths from `VISPAM_ZIP` / `VISPAM_DISJOINT_DIR` or `data/`. |
 | `analyze_results.py` | Turns `results/` into `../paper/numbers.tex`, `tables/*.tex`, `figures/*.pdf` and `summary.json`. |
 | `experiment_stats.py` | Aggregation and error-decomposition helpers. |
 | `test_statistics.py` | Self-checks for the bootstrap, McNemar and error-decomposition code. |
@@ -43,22 +47,21 @@ Every reported number comes from this protocol; nothing else changes between mod
 ## Reproduce
 
 ```powershell
-# 1. install
 pip install -r requirements.txt
 
-# 2. point at the data (defaults are the paths used for the paper)
-$env:VISPAM_ZIP = "C:\path\to\vispamdetectionv2_official.zip"
-$env:VISPAM_DISJOINT_DIR = "C:\path\to\product_disjoint_split_seed42"
+# put the release at ../data/vispamdetectionv2_official.zip,
+# or point VISPAM_ZIP at it (see config.py)
+python build_product_disjoint_split.py
 
-# 3. train the 13 runs (~100 min on an 8 GB laptop GPU; finished runs are skipped)
-python run_matrix.py
-
-# 4. regenerate every table, figure and inline number of the paper
-python analyze_results.py
+python run_all.py        # 34 configurations, then every table, figure and number
 ```
 
-`run_matrix.py --only t2_single_s42` runs a single configuration;
-`--smoke` does a 256-row, one-epoch sanity pass.
+`run_all.py` resumes: finished runs are skipped. `run_experiment.py` can also be
+driven directly, and `run_matrix.py --only t2_single_s42` runs one configuration
+while `--smoke` does a 256-row, one-epoch sanity pass.
+
+`analyze_results.py` refuses to write a table when a run is missing, unless
+`ALLOW_MISSING=1` is set: a silent 0.00 in a paper is worse than a failed build.
 
 ## Outputs per run
 

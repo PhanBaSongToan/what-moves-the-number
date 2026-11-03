@@ -15,9 +15,10 @@ import unicodedata
 import zipfile
 
 import pandas as pd
+import config
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ZIP = os.environ.get("VISPAM_ZIP", r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip")
+ZIP = config.dataset_zip()
 
 PHRASES = [
     "chất lượng sản phẩm tuyệt vời",

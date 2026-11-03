@@ -5,9 +5,10 @@ import zipfile
 
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit
+import config
 
-ZIP_PATH = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
-OUT_DIR = r"C:\Users\ACER\Downloads\vispam_outputs\product_disjoint_split_seed42"
+ZIP_PATH = config.dataset_zip()
+OUT_DIR = config.disjoint_dir()
 
 
 def norm(x):

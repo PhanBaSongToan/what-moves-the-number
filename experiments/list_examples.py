@@ -8,7 +8,7 @@ import zipfile
 
 import pandas as pd
 
-ZIP = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
+ZIP = config.dataset_zip()
 
 with zipfile.ZipFile(ZIP) as handle:
     train = pd.read_csv(handle.open("train.csv"))
@@ -24,3 +24,4 @@ for label in range(4):
         out.write(f" - {text}\n")
 out.close()
 print("ok")
+import config

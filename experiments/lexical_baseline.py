@@ -15,9 +15,10 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.svm import LinearSVC
+import config
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ZIP = os.environ.get("VISPAM_ZIP", r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip")
+ZIP = config.dataset_zip()
 
 with zipfile.ZipFile(ZIP) as handle:
     import pandas as pd

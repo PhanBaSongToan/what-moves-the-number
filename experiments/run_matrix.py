@@ -46,8 +46,8 @@ def main() -> None:
     if args.smoke:
         original = R.encode_split
 
-        def small(split: str, text_mode: str):
-            data = original(split, text_mode)
+        def small(split: str, text_mode: str, backbone: str = R.CHECKPOINT, max_len: int = R.MAX_LEN):
+            data = original(split, text_mode, backbone, max_len)
             return {
                 name: {
                     key: (value[:256] if isinstance(value, list) else value)

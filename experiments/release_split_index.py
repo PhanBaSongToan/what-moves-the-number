@@ -16,12 +16,11 @@ import os
 import zipfile
 
 import pandas as pd
+import config
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ZIP = os.environ.get("VISPAM_ZIP", r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip")
-DISJOINT = os.environ.get(
-    "VISPAM_DISJOINT_DIR", r"C:\Users\ACER\Downloads\vispam_outputs\product_disjoint_split_seed42"
-)
+ZIP = config.dataset_zip()
+DISJOINT = config.disjoint_dir()
 OUT = os.path.join(HERE, "data", "product_disjoint_ids.csv")
 
 with zipfile.ZipFile(ZIP) as handle:

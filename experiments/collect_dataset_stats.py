@@ -9,7 +9,7 @@ import zipfile
 
 import pandas as pd
 
-ZIP = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
+ZIP = config.dataset_zip()
 
 with zipfile.ZipFile(ZIP) as handle:
     parts = {name: pd.read_csv(handle.open(f"{name}.csv")) for name in ("train", "dev", "test")}
@@ -101,3 +101,4 @@ for name, texts in examples.items():
     print(f"\n[{name}]")
     for text in texts:
         print(" -", text.replace("\n", " ")[:220])
+import config

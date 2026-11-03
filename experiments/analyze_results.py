@@ -402,10 +402,7 @@ def write_controls_table(state: dict, runs: dict) -> None:
 
 def aggregate_mean(runs: dict, prefix: str) -> dict:
     """Mean accuracy and macro-F1 over the runs matching ``prefix``."""
-    try:
-        agg = aggregate(runs, prefix)
-    except KeyError:
-        return {"acc": 0.0, "f1": 0.0, "n": 0}
+    agg = aggregate(runs, prefix)
     return {"acc": agg["acc"]["mean"], "f1": agg["f1"]["mean"], "n": agg["acc"]["n"]}
 
 
@@ -671,7 +668,6 @@ def main() -> None:
     write_controls_table(state, runs)
     write_effects_table(state)
     plot_confusion(runs)
-    plot_curves(runs)
 
     with open(os.path.join(HERE, "summary.json"), "w", encoding="utf-8") as handle:
         json.dump({"runs": sorted(runs), "state": state}, handle, indent=2, ensure_ascii=False)
@@ -713,11 +709,22 @@ def per_class_average(runs: dict, prefix: str) -> dict:
 
 
 def safe_aggregate(runs: dict, prefix: str, field: str | None = None) -> dict:
-    """Like :func:`aggregate`, but returns zeros instead of raising when a group is missing."""
+    """Like :func:`aggregate`, but explains the problem and stops if a group is missing.
+
+    A missing group used to be written out as 0.00, which is how a table of zeros
+    can end up in a paper. Set ``ALLOW_MISSING=1`` to keep the old behaviour while
+    developing.
+    """
     try:
         return aggregate(runs, prefix, field)
     except KeyError:
-        print(f"[warn] no finished run matches {prefix!r}; writing placeholder values")
+        message = (
+            f"no finished run matches {prefix!r}; run experiments/run_all.py first "
+            f"(or set ALLOW_MISSING=1 to write placeholder zeros)"
+        )
+        if os.environ.get("ALLOW_MISSING") != "1":
+            raise SystemExit(message)
+        print("[warn]", message)
         empty = {"mean": 0.0, "sd": 0.0, "values": [], "n": 0, "runs": []}
         return {"acc": dict(empty), "f1": dict(empty)}
 

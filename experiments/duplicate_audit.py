@@ -8,8 +8,8 @@ import zipfile
 
 import pandas as pd
 
-ZIP = r"C:\Users\ACER\Downloads\vispamdetectionv2_official.zip"
-DISJOINT = r"C:\Users\ACER\Downloads\vispam_outputs\product_disjoint_split_seed42"
+ZIP = config.dataset_zip()
+DISJOINT = config.disjoint_dir()
 
 
 def normalise(series: pd.Series) -> pd.Series:
@@ -37,3 +37,4 @@ for name, parts in (("official", official), ("disjoint", disjoint)):
 print(json.dumps(report, indent=2))
 with open("experiments/duplicate_report.json", "w", encoding="utf-8") as handle:
     json.dump(report, handle, indent=2)
+import config
