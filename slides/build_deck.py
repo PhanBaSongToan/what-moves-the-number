@@ -504,6 +504,22 @@ notes(s, "Mô hình phẳng: PhoBERT + một lớp linear 4 đầu ra. Mô hình
          "hoá thêm mô tả sản phẩm. Điểm cần nói: cả ba dùng chung encoder nên so sánh là công bằng.")
 
 
+
+# ---------------------------------------------------------------- objective
+s = slide()
+header(s, "Mô hình đa tác vụ học như thế nào?",
+       "Phương pháp · Cái gì khác mô hình phẳng?")
+s.shapes.add_picture(os.path.join(ASSETS, "loss_equations.png"), Inches(0.85), Inches(1.65),
+                     width=Inches(11.6))
+callout(s, "Đầu loại chỉ nhận 1.394 trong 14.306 dòng huấn luyện — "
+           "đó là lý do cấu trúc khiến phân cấp khó tạo lợi thế.",
+        Inches(0.85), Inches(5.85), Inches(11.6), Inches(0.85), color=AMBER, size=14)
+notes(s, "Đây là chỗ khác biệt duy nhất giữa hai mô hình, nên phải nói rõ. Loss nhị phân tính trên "
+         "mọi dòng; loss loại chỉ tính khi dòng đó là rác, vì review không rác không có loại. Hệ quả: "
+         "đầu loại chỉ thấy khoảng 10% dữ liệu, và lớp Spam-1 chỉ có 211 dòng. Khi suy luận, cascade "
+         "lấy quyết định nhị phân làm cổng; tích hai marginal chỉ dùng để xem độ tin cậy, không dùng "
+         "để dự đoán.")
+
 # ---------------------------------------------------------------- reproduction
 s = slide()
 header(s, "Tái lập: khớp về độ lớn, không khớp tuyệt đối",
