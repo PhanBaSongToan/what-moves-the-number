@@ -299,7 +299,7 @@ Chọn hướng **IEEEtran** và **Giai đoạn A + B**. Bản mới nằm ở `
 
 ### 11.2 Kết quả mới — và kết luận đã đảo chiều
 
-21 run, mỗi run 6–13 phút trên RTX 5050 Laptop:
+**34 run**, mỗi run 6–20 phút trên RTX 5050 Laptop:
 
 | Cấu hình | Accuracy | Macro-F1 |
 |---|---|---|
@@ -309,17 +309,20 @@ Chọn hướng **IEEEtran** và **Giai đoạn A + B**. Bản mới nằm ở `
 | Binary head của multi-task, Task 1 | 91,68 | 89,15 |
 | Single-task, split disjoint (3 seed) | 90,99 | **75,94** |
 | Multi-task, split disjoint (3 seed) | 90,67 | **73,98** |
-| Single-task, bỏ 47 dòng train trùng văn bản với test | 90,24 | 73,48 |
-| Multi-task, bỏ 47 dòng train trùng văn bản với test | 90,66 | 77,15 |
-| Single-task, backbone XLM-R base | 90,87 | 76,42 |
-| Single-task, cửa sổ 128 token | 91,22 | 76,17 |
+| Single-task, bỏ 47 dòng train trùng văn bản (3 seed) | 90,14 ± 0,16 | 74,72 ± 1,34 |
+| Multi-task, bỏ 47 dòng train trùng văn bản (3 seed) | 90,75 ± 0,31 | 77,02 ± 0,77 |
+| Fusion: mã hoá mô tả ở lượt riêng (3 seed) | 90,86 ± 0,36 | 75,98 ± 1,15 |
+| Single-task, backbone XLM-R base (3 seed) | 90,83 ± 0,13 | 74,63 ± 1,55 |
+| Single-task, cửa sổ 128 token (3 seed) | 90,80 ± 0,42 | 76,49 ± 0,46 |
+| Single-task, một learning rate 2e-5 | 90,87 | 74,56 |
+| Multi-task, một learning rate 2e-5 | 90,84 | 73,19 |
 | Multi-task + weighted type loss | 89,43 | 72,91 |
 | Single-task + metadata concat | 90,66 | 76,66 |
 | TF-IDF + Linear SVM (tham chiếu) | 84,40 | 66,52 |
 
 **Kết luận quan trọng: mức tăng +0,73 pp của bản cũ là nhiễu seed.** Với 3 seed, chênh lệch là −0,08 pp (bootstrap CI [−0,61; +3,94], p = 0,142). Seed 42 cho +1,75 pp, seed 43 và 44 đảo lại. Bài mới viết lại toàn bộ abstract/kết luận theo hướng trung thực: đóng góp nằm ở protocol, audit leakage/duplicate và phân rã lỗi, **không** phải ở kiến trúc multi-task.
 
-Ba thí nghiệm kiểm soát còn cho thấy thứ hạng **phụ thuộc vào cách dựng evaluation**: trên sản phẩm mới, single-task hơn 1,96 pp; sau khi bỏ các dòng train trùng văn bản, multi-task lại hơn 3,67 pp. Đây là thông điệp chính của bài: không thể kết luận về kiến trúc nếu chưa cố định evaluation — và mọi so sánh một split, kể cả của bài này, đều phải đọc theo tinh thần đó.
+Các thí nghiệm kiểm soát cho thấy thứ hạng **phụ thuộc vào cách dựng evaluation**: trên sản phẩm mới single-task hơn 1,96 pp; sau khi bỏ các dòng train trùng văn bản multi-task lại hơn 2,30 pp. Ngược lại, XLM-R và learning-rate đơn làm giảm điểm của cả hai mô hình, còn fusion mô tả (không còn truncation) không thêm gì. Đây là thông điệp chính của bài: không thể kết luận về kiến trúc nếu chưa cố định evaluation — và mọi so sánh một split, kể cả của bài này, đều phải đọc theo tinh thần đó.
 
 ### 11.3 Phát hiện mới được đưa vào bài
 

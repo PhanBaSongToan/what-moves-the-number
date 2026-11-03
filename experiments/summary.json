@@ -12,6 +12,7 @@
     "t2_multitask_disjoint_s42",
     "t2_multitask_disjoint_s43",
     "t2_multitask_disjoint_s44",
+    "t2_multitask_lr2_s42",
     "t2_multitask_s42",
     "t2_multitask_s43",
     "t2_multitask_s44",
@@ -23,11 +24,16 @@
     "t2_single_disjoint_s43",
     "t2_single_disjoint_s44",
     "t2_single_len128_s42",
+    "t2_single_len128_s43",
+    "t2_single_len128_s44",
+    "t2_single_lr2_s42",
     "t2_single_metadata_s42",
     "t2_single_s42",
     "t2_single_s43",
     "t2_single_s44",
-    "t2_single_xlmr_s42"
+    "t2_single_xlmr_s42",
+    "t2_single_xlmr_s43",
+    "t2_single_xlmr_s44"
   ],
   "state": {
     "run_minutes": 9.89831198255221,
@@ -90,14 +96,14 @@
       "n": 3
     },
     "xlmr": {
-      "acc": 0.908656265727227,
-      "f1": 0.7642460736299798,
-      "n": 1
+      "acc": 0.9083207515517531,
+      "f1": 0.7463427242431036,
+      "n": 3
     },
     "len128": {
-      "acc": 0.912179164569703,
-      "f1": 0.7616760811279865,
-      "n": 1
+      "acc": 0.9079852373762791,
+      "f1": 0.7649243144489373,
+      "n": 3
     },
     "fusion": {
       "acc": 0.9085723871833585,
@@ -105,14 +111,14 @@
       "n": 3
     },
     "lr_single": {
-      "acc": 0.0,
-      "f1": 0.0,
-      "n": 0
+      "acc": 0.908656265727227,
+      "f1": 0.7455906217900439,
+      "n": 1
     },
     "lr_multi": {
-      "acc": 0.0,
-      "f1": 0.0,
-      "n": 0
+      "acc": 0.9084046300956216,
+      "f1": 0.7318509200851203,
+      "n": 1
     },
     "dedupe_removed": 47,
     "weighted": {

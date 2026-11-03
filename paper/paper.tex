@@ -16,6 +16,11 @@
 \usepackage[hidelinks]{hyperref}
 \graphicspath{{figures/}}
 
+% tighten the space around floats so the paper stays inside the eight-page limit
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+
 \newcommand{\phobert}{PhoBERT}
 \newcommand{\vispam}{ViSpamReviews}
 \newcommand{\ie}{i.e.,}
@@ -58,7 +63,7 @@ Our contributions are: (i) a documented, single-protocol comparison in which the
 
 \section{Related Work}
 \subsection{Opinion spam and review spam detection}
-Jindal and Liu \cite{jindal2008} introduced opinion spam as a text-classification problem and showed that duplicate and near-duplicate reviews are a strong signal. Ott et al.\ \cite{ott2011} showed that crowd workers can be induced to write deceptive reviews and that n-gram classifiers separate them from genuine ones almost perfectly, a result that later work attributed partly to the construction of the positive class. Mukherjee et al.\ \cite{mukherjee2012} moved from single reviews to reviewer groups, and \cite{mukherjee2013} analysed what a commercial filter actually removes. Rayana and Akoglu \cite{rayana2015} coupled ranking and classification in a collective model. A common thread is that evaluation design matters as much as the classifier: label noise, duplicate text and split construction all change the conclusion. Our audit follows that line.
+Jindal and Liu \cite{jindal2008} introduced opinion spam as a text-classification problem and showed that duplicate and near-duplicate reviews are a strong signal. Ott et al.\ \cite{ott2011} showed that crowd workers can be induced to write deceptive reviews and that n-gram classifiers separate them from genuine ones almost perfectly, a result that later work attributed partly to the construction of the positive class. Mukherjee et al.\ \cite{mukherjee2012} moved from single reviews to reviewer groups, and \cite{mukherjee2013} analysed what a commercial filter actually removes. Rayana and Akoglu \cite{rayana2015} coupled ranking and classification in a collective model. Our audit follows that thread.
 
 \subsection{Vietnamese review spam}
 \vispam{} \cite{vispam2022} provides roughly twenty thousand annotated reviews from Vietnamese platforms with a strict annotation procedure, and defines the binary and four-class tasks used here. Its metadata-integration follow-up \cite{vispam2024} adds product category and description through sentence embeddings and reports that \phobert{} with a description-derived \textsc{S-PhoBERT} embedding reaches the best scores. Our work differs in two ways: we evaluate a hierarchical objective rather than a richer input, and we add a product-disjoint split plus a duplicate audit. We treat the metadata result as a baseline to be re-checked, not as a claim to be extended.
@@ -235,7 +240,7 @@ Two interventions are re-run under the locked protocol so that they can be compa
 \input{tables/perclass.tex}
 
 \subsection{Reproduction}
-Table~\ref{tab:reproduction} places the published reference next to our locked-protocol runs and a lexical reference point. Our single-task \phobert{} reaches \SingleFone{} macro-F1 on Task~2 and \SingleTOneFone{} on Task~1 (\SingleTOneAcc{} accuracy), against 71.56 and 85.58 in \cite{vispam2024}. The gap is positive but should not be read as an improvement over the original method: the two experiments use different snapshots, the public release has 11 more test rows, and our protocol differs in batch size, padding and numerical precision. What the table establishes is an internal baseline measured under the same conditions as every other row in this paper. The TF-IDF row calibrates expectations: a bag of unigrams and bigrams with a linear SVM reaches \LexFone{} macro-F1 on Task~2, so a large part of the contextual model's advantage comes from modelling word order and context rather than from lexical overlap.
+Table~\ref{tab:reproduction} places the published reference next to our locked-protocol runs and a lexical reference point. Our single-task \phobert{} reaches \SingleFone{} macro-F1 on Task~2 and \SingleTOneFone{} on Task~1 (\SingleTOneAcc{} accuracy), against 71.56 and 85.58 in \cite{vispam2024}. The gap is positive but should not be read as an improvement over the original method: the two experiments use different snapshots, the public release has 11 more test rows, and our protocol differs in batch size, padding and numerical precision. What the table establishes is an internal baseline measured under the same conditions as every other row in this paper. The TF-IDF row calibrates expectations: unigrams and bigrams with a linear SVM reach \LexFone{} macro-F1 on Task~2, so much of the contextual model's advantage comes from word order and context rather than from lexical overlap.
 
 \subsection{Multi-task supervision}
 Table~\ref{tab:main} reports the headline comparison over three seeds. The multi-task model reaches \MultiFone{} macro-F1 against \SingleFone{} for the baseline, so the hierarchical objective is worth \DeltaFone{} points --- less than the seed-to-seed spread of either model and well inside the interval. The two models do disagree on individual rows: the paired bootstrap on seed 42 gives an interval of [\BootLow, \BootHigh] and the exact McNemar test on the 147 discordant rows gives $p=\McNemarP$, which says that the models make different mistakes rather than that one makes fewer. That distinction is the honest summary of this comparison, and it is the opposite of what a single-seed run of the same code suggested.
@@ -254,7 +259,7 @@ Table~\ref{tab:controls} collects the controls, each re-run against its own refe
 
 The fusion row is the test of the metadata idea that Section~V-E could not give. Encoding the product description in a second forward pass keeps the whole review text inside its own window, so nothing is truncated for either input, and the model reaches \FusionFone{} with \FusionAcc\% accuracy. Once the description is actually visible it still adds nothing measurable, which is consistent with the reference paper relying on a separately fine-tuned sentence encoder rather than on concatenated text.
 
-The remaining rows are robustness checks on the protocol: XLM-R base reaches \XlmrFone{}, the 128-token window \LenFone{}, and a single learning rate of $2\times10^{-5}$ for both parameter groups \LrSingleFone{} for the flat model and \LrMultiFone{} for the cascade. None of these moves the score by more than about a point, so the conclusions of Section~V are not artefacts of the backbone, the window or the two-rate schedule.
+The remaining rows are robustness checks on the protocol. The 128-token window gives \LenFone{}, within noise of the 100-token reference, so the window is not a live hyperparameter on reviews this short. XLM-R base gives \XlmrFone{}, about a point and a half below \phobert{} over three seeds; this is the one control that does move the score, and it says that Vietnamese-specific pretraining matters here. The claim in Section~V is therefore about a \phobert{}-class encoder rather than about encoders in general. A single learning rate of $2\times10^{-5}$ for both parameter groups gives \LrSingleFone{} and \LrMultiFone{}, below their two-rate counterparts by 1.5 and 2.8 points respectively, which is why the locked protocol keeps the split schedule.
 
 \subsection{Per-class behaviour}
 \label{sec:errors}

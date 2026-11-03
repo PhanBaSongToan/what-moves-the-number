@@ -52,7 +52,9 @@ that:
 * three seeds for the headline comparison, paired bootstrap and McNemar test;
 * both models evaluated on the product-disjoint split over three seeds;
 * controls that answer the obvious objections: text-deduplicated training data,
-  an XLM-R backbone, and a 128-token window;
+  an XLM-R backbone, a 128-token window and a single-rate schedule;
+* a metadata-fusion baseline that encodes the description separately, so the
+  "metadata was truncated" confound is removed;
 * ablations re-run under the same protocol instead of a mixed-protocol table;
 * a verbatim-duplicate audit on top of the product-group audit;
 * label definitions with real examples, dataset statistics, error decomposition,
@@ -68,14 +70,19 @@ that:
 | Multi-task PhoBERT, official split (3 seeds) | 76.02 ± 0.96 |
 | Single-task, product-disjoint (3 seeds) | 75.94 |
 | Multi-task, product-disjoint (3 seeds) | 73.98 |
-| Single-task, text-deduplicated training | 73.48 |
-| Multi-task, text-deduplicated training | 77.15 |
-| Single-task, XLM-R backbone | 76.42 |
+| Single-task, text-deduplicated training (3 seeds) | 74.72 ± 1.34 |
+| Multi-task, text-deduplicated training (3 seeds) | 77.02 ± 0.77 |
+| Description fusion, second encoder pass (3 seeds) | 75.98 ± 1.15 |
+| Single-task, XLM-R backbone (3 seeds) | 74.63 ± 1.55 |
+| Single-task, 128-token window (3 seeds) | 76.49 ± 0.46 |
+| Single-task, single learning rate 2e-5 | 74.56 |
+| Multi-task, single learning rate 2e-5 | 73.19 |
 
 The hierarchy gives no gain on the official split, is behind on unseen products,
-and is ahead once duplicated training text is removed. The honest conclusion is
-that the ranking depends on how the evaluation is built, which is the paper's
-main message.
+and is ahead once duplicated training text is removed. Metadata that is not
+truncated still adds nothing, and the backbone matters more than the objective.
+The honest conclusion is that the ranking depends on how the evaluation is
+built, which is the paper's main message.
 
 The full audit is in `review_20261103/BAO_CAO_KIEM_TRA_BAI_BAO.md` (Vietnamese).
 
