@@ -97,7 +97,12 @@ def bullets(slide, items, left, top, width, height, size=18, spacing=1.15):
     return box
 
 
+SLIDE_COUNTER = {"n": 0}
+
+
 def header(slide, title, kicker=None, number=None):
+    SLIDE_COUNTER["n"] += 1
+    number = SLIDE_COUNTER["n"]
     if kicker:
         textbox(slide, Inches(0.75), Inches(0.42), Inches(11.8), Inches(0.3),
                 kicker.upper(), size=12, bold=True, color=BLUE)
@@ -309,6 +314,24 @@ for index, (num, title, body) in enumerate(cards):
 notes(s, "Bốn câu hỏi này chính là bốn phần của bài. Câu 4 là câu mới so với bản nháp đầu và là câu "
          "quan trọng nhất — cả bài là để trả lời nó.")
 
+
+# ---------------------------------------------------------------- related work
+s = slide()
+header(s, "Nhóm đứng ở đâu trong tài liệu", "Định vị")
+bullets(s, [
+    (0, "Jindal & Liu (2008): đặt bài toán opinion spam; trùng lặp là tín hiệu mạnh", True),
+    (0, "Ott và cộng sự (2011): review giả do người được thuê viết; n-gram tách gần hoàn hảo"),
+    (0, "ViSpamReviews (2022) và Dinh & Luu (2024): bộ dữ liệu Việt + fusion metadata"),
+    (0, "Multi-task: Caruana (1997); MT-DNN (2019)"),
+], Inches(0.75), Inches(1.85), Inches(7.2), Inches(3.2), size=16)
+callout(s, "Nhóm không đề xuất mô hình mới.\nNhóm kiểm định lại một kết luận đã công bố.",
+        Inches(8.3), Inches(2.0), Inches(4.3), Inches(1.6), size=15)
+callout(s, "24 tài liệu tham khảo trong bài", Inches(8.3), Inches(4.0), Inches(4.3), Inches(0.9),
+        color=AMBER, size=15)
+notes(s, "Slide này để thầy thấy nhóm biết mình đang ở đâu. Ý chính: bài toán opinion spam có từ "
+         "2008; bộ dữ liệu Việt có từ 2022 và bản metadata 2024. Nhóm không phát minh mô hình mới — "
+         "nhóm kiểm định lại một kết luận đã công bố, với thiết kế chặt hơn.")
+
 # ---------------------------------------------------------------- 7. protocol
 s = slide()
 header(s, "Một protocol duy nhất cho 34 run", "Phương pháp", 7)
@@ -444,10 +467,35 @@ image = s.shapes.add_picture(os.path.join(ASSETS, "confusion.png"), Inches(6.1),
                              width=Inches(6.5))
 image.crop_left = 0
 textbox(s, Inches(6.1), Inches(1.55), Inches(6.5), Inches(0.3),
-        "Minh hoạ kết quả: ma trận nhầm lẫn (slide 16)", size=12, color=GREY)
+        "Minh hoạ kết quả: ma trận nhầm lẫn", size=12, color=GREY)
 notes(s, "Mô hình phẳng: PhoBERT + một lớp linear 4 đầu ra. Mô hình đa tác vụ: cùng encoder, hai đầu "
          "ra — một nhị phân, một 3 lớp chỉ học trên review spam — rồi ghép bằng cascade. Fusion: mã "
          "hoá thêm mô tả sản phẩm. Điểm cần nói: cả ba dùng chung encoder nên so sánh là công bằng.")
+
+
+# ---------------------------------------------------------------- reproduction
+s = slide()
+header(s, "Tái lập: khớp về độ lớn, không khớp tuyệt đối", "Kết quả")
+table(s, [
+    ["Cấu hình", "Task 1 (Acc / F1)", "Task 2 (Acc / F1)"],
+    ["Bài gốc công bố", "89,23 / 85,58", "87,79 / 71,56"],
+    ["Nhóm tái lập", "91,73 / 89,46", "90,89 / 76,10"],
+    ["Tham chiếu TF-IDF", "84,63 / 78,80", "84,40 / 66,52"],
+], Inches(0.75), Inches(1.85), Inches(11.8), [3.2, 2.6, 2.6], row_height=Inches(0.62),
+    body_size=15, highlight_rows=(2,), highlight_color=RGBColor(0xE8, 0xF5, 0xEC))
+callout(s, "Bản công khai KHÁC snapshot bài gốc: 14.306 vs 14.284 dòng; test 3.974 vs 3.963\n"
+           "→ không được đọc là “nhóm vượt bài gốc”",
+        Inches(0.75), Inches(4.75), Inches(6.3), Inches(1.35), color=AMBER, size=14)
+callout(s, "Task 1: binary chuyên dụng 89,46 vs head của đa tác vụ 89,15\n"
+           "→ không làm hỏng nhánh nhị phân",
+        Inches(7.35), Inches(4.75), Inches(5.2), Inches(1.35), size=14)
+textbox(s, Inches(0.75), Inches(6.35), Inches(11.8), Inches(0.4),
+        "TF-IDF chỉ đạt 66,52 macro-F1 ở Task 2 — PhoBERT hơn gần 10 điểm nhờ ngữ cảnh.",
+        size=13, color=GREY)
+notes(s, "Đây là câu hỏi đầu tiên trong bốn câu hỏi nghiên cứu: có tái lập được không. Câu trả lời: "
+         "khớp về độ lớn — nhóm được 76,10 so với 71,56 công bố — nhưng KHÔNG được nói là vượt bài "
+         "gốc, vì bản công khai khác snapshot: 14.306 so với 14.284 dòng. Dòng TF-IDF để cho thấy mức "
+         "cải thiện của PhoBERT so với túi từ là gần 10 điểm.")
 
 # ---------------------------------------------------------------- 12. main result
 s = slide()
@@ -561,7 +609,11 @@ table(s, [
     ["Nhầm loại rác", "36", "29"],
 ], Inches(8.35), Inches(1.9), Inches(4.3), [2.2, 1.0, 1.2], body_size=14)
 callout(s, "Điểm nghẽn là quyết định nhị phân,\nkhông phải tầng phân loại",
-        Inches(8.35), Inches(4.5), Inches(4.3), Inches(1.2), size=15)
+        Inches(8.35), Inches(4.3), Inches(4.3), Inches(1.0), size=15)
+textbox(s, Inches(8.35), Inches(5.55), Inches(4.3), Inches(0.9),
+        "Độ tin cậy (ECE) trên test: 7,8% phẳng · 5,3% đa tác vụ. Xác suất của cascade là tích hai "
+        "marginal nên bị under-confident — không nên dùng trực tiếp như xác suất.",
+        size=11, color=GREY, spacing=1.1)
 notes(s, "Nhìn ma trận: hàng Spam-2 có 37% bị đoán thành non-spam. Ngược lại, nhầm giữa các loại rác "
          "chỉ 36 ca. Nghĩa là mô hình phát hiện rác chưa đủ tốt, chứ không phải phân loại rác sai. "
          "Hướng cải thiện nên tập trung vào quyết định nhị phân.")
@@ -614,6 +666,23 @@ notes(s, "Ba can thiệp đều là những ý tưởng hợp lý mà ai cũng n
          "điểm tụt 4 điểm. Nối metadata vào text thì không hiệu quả vì 94,5% dòng bị cắt cụt. Nhóm "
          "làm thêm bản fusion mã hoá mô tả riêng — vẫn không hơn. Đây là kết quả âm có giá trị: nó "
          "tiết kiệm thời gian cho người sau.")
+
+
+# ---------------------------------------------------------------- reproducibility
+s = slide()
+header(s, "Vì sao tin được những con số này?", "Tái lập")
+bullets(s, [
+    (0, "34 cấu hình trong bài, mỗi run lưu đủ config, log, metrics và dự đoán từng dòng", True),
+    (0, "3 seed + bootstrap + McNemar thay vì một con số duy nhất"),
+    (0, "Split dựng lại từ script cho ra đúng cùng một partition"),
+    (0, "CI tự động kiểm bảng trong bài khớp kết quả, và build lại PDF"),
+], Inches(0.75), Inches(1.85), Inches(7.3), Inches(3.2), size=16)
+callout(s, "Repo công khai:\ngithub.com/PhanBaSongToan/\nwhat-moves-the-number",
+        Inches(8.4), Inches(1.95), Inches(4.2), Inches(1.7), size=14)
+callout(s, "Mọi bảng trong bài đều sinh tự động\ntừ file kết quả — không chép tay",
+        Inches(8.4), Inches(3.95), Inches(4.2), Inches(1.2), size=14)
+notes(s, "Nếu thầy hỏi làm sao tin: mỗi run lưu đủ để chạy lại; split tái tạo được đúng từng dòng; "
+         "mọi bảng trong bài sinh tự động từ kết quả nên không thể chép nhầm; và có CI kiểm tra việc đó.")
 
 # ---------------------------------------------------------------- 19. conclusion
 s = slide()
