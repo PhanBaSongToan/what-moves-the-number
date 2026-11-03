@@ -543,10 +543,10 @@ header(s, "Cái gì thực sự làm thay đổi điểm?", "Kết quả", 14)
 chart_data = CategoryChartData()
 # PowerPoint plots the first category at the bottom, so the list is built
 # bottom-up: the seed-noise reference sits at the bottom, the largest mover on top.
-chart_data.categories = ["Nhiễu seed (sd)", "Cửa sổ 128 token", "Đa tác vụ",
-                         "Metadata fusion", "Bỏ trùng văn bản", "Backbone XLM-R",
-                         "Một learning rate", "Tách theo sản phẩm"]
-chart_data.add_series("Δ macro-F1", (0.96, 0.39, -0.08, -0.12, -1.38, -1.47, -1.54, -1.96))
+chart_data.categories = ["Chuẩn hoá teencode", "Nhiễu seed (sd)", "Cửa sổ 128 token",
+                         "Đa tác vụ", "Metadata fusion", "Bỏ trùng văn bản",
+                         "Backbone XLM-R", "Một learning rate", "Tách theo sản phẩm"]
+chart_data.add_series("Δ macro-F1", (1.46, 0.96, 0.39, -0.08, -0.12, -1.38, -1.47, -1.69, -1.96))
 chart = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, Inches(0.6), Inches(1.7),
                            Inches(7.6), Inches(4.9), chart_data).chart
 chart.has_legend = False
@@ -559,7 +559,7 @@ labels.font.size = Pt(12)
 labels.font.bold = True
 labels.number_format = '0.00'
 labels.number_format_is_linked = False
-colors = [GREY, GREEN, RED, RED, RED, RED, RED, RED]
+colors = [GREEN, GREY, GREEN, RED, RED, RED, RED, RED, RED]
 for index, color in enumerate(colors):
     point = plot.series[0].points[index]
     point.format.fill.solid()
@@ -573,13 +573,15 @@ table(s, [
     ["Kiến trúc (đa tác vụ)", "−0,08"],
     ["Metadata fusion", "−0,12"],
     ["Cửa sổ token", "+0,39"],
+    ["Chuẩn hoá teencode", "+1,46"],
     ["Nhiễu seed", "0,7 – 1,0"],
-], Inches(8.55), Inches(1.9), Inches(4.0), [2.4, 1.2], body_size=14)
+], Inches(8.55), Inches(1.9), Inches(4.0), [2.4, 1.2], body_size=13)
 callout(s, "Đổi cách chấm: 1,0–2,3 điểm\nĐổi kiến trúc: 0,1 điểm",
         Inches(8.55), Inches(4.4), Inches(4.0), Inches(1.3), size=16)
 notes(s, "Đây là slide quan trọng nhất của bài. Đọc từ trên xuống: tách theo sản phẩm, learning rate, "
          "backbone và bỏ trùng văn bản đều 1,4 đến 2,0 điểm. Rồi đến metadata và kiến trúc, gần như bằng 0. "
-         "Thanh xám ở dưới cùng là nhiễu seed 0,96. Nghĩa là hiệu ứng kiến trúc còn nhỏ hơn cả nhiễu.")
+         "Thanh xám là nhiễu seed 0,96, còn thanh xanh thứ hai là chuẩn hoá teencode, can thiệp duy nhất "
+         "có tác dụng. Nghĩa là hiệu ứng kiến trúc còn nhỏ hơn cả nhiễu.")
 
 # ---------------------------------------------------------------- 15. reversal
 s = slide()
@@ -589,13 +591,36 @@ table(s, [
     ["Split gốc, 3 seed", "76,10", "76,02", "Hòa"],
     ["Tách theo sản phẩm, 3 seed", "75,94", "73,98", "Phẳng hơn 1,96"],
     ["Bỏ trùng văn bản, 3 seed", "74,72", "77,02", "Đa tác vụ hơn 2,30"],
-], Inches(0.75), Inches(1.85), Inches(11.8), [3.4, 1.6, 1.8, 2.6], row_height=Inches(0.68),
-    body_size=15, highlight_rows=(1, 2, 3))
-callout(s, "Ba cách đánh giá đều hợp lý — và chúng mâu thuẫn nhau.\n"
-           "Không thể kết luận về kiến trúc khi chưa cố định cách đánh giá.",
-        Inches(0.75), Inches(5.15), Inches(11.8), Inches(1.4), color=RED, size=17)
-notes(s, "Đây là bằng chứng mạnh nhất cho luận điểm của bài. Cùng hai mô hình, ba cách chấm cho ba "
-         "kết luận khác nhau. Không phải mô hình thay đổi, mà là thước đo thay đổi.")
+    ["Ba partition sản phẩm, seed 42", "75,22 – 75,94", "73,98 – 77,37", "Cascade lệch 2,87"],
+], Inches(0.75), Inches(1.8), Inches(11.8), [3.6, 1.8, 1.8, 2.8], row_height=Inches(0.62),
+    body_size=14, highlight_rows=(1, 2, 3, 4))
+callout(s, "Bốn cách đánh giá đều hợp lý — và chúng mâu thuẫn nhau.\n"
+           "Chỉ riêng việc chọn partition đã làm cascade lệch 2,87 điểm.",
+        Inches(0.75), Inches(5.05), Inches(11.8), Inches(1.3), color=RED, size=16)
+notes(s, "Đây là bằng chứng mạnh nhất cho luận điểm của bài. Cùng hai mô hình, bốn cách chấm cho bốn "
+         "kết luận khác nhau. Dòng cuối là phần mới: chỉ đổi cách chia sản phẩm, cascade đã nhảy từ "
+         "73,98 lên 77,37. Không phải mô hình thay đổi, mà là thước đo thay đổi.")
+
+
+# ---------------------------------------------------------------- remaining controls
+s = slide()
+header(s, "Ba đối chứng còn lại — và một can thiệp có tác dụng", "Kết quả")
+table(s, [
+    ["Đối chứng", "Phẳng", "Đa tác vụ", "So với chuẩn"],
+    ["Bỏ 211 dòng gần trùng", "73,66", "74,46", "−2,44 / −1,56"],
+    ["Chuẩn hoá teencode", "77,56", "76,21", "+1,46 / +0,19"],
+    ["Tách theo category (5.800 dòng)", "72,25", "71,59", "test set khác"],
+], Inches(0.75), Inches(1.85), Inches(11.8), [4.2, 1.6, 1.8, 2.6], row_height=Inches(0.72),
+    body_size=15, highlight_rows=(2,), highlight_color=RGBColor(0xE8, 0xF5, 0xEC))
+callout(s, "Bỏ gần trùng làm CẢ HAI mất điểm: split ngẫu nhiên hào phóng vì văn mẫu\n"
+           "được copy ở dạng hơi khác, không chỉ nguyên văn.",
+        Inches(0.75), Inches(4.75), Inches(5.8), Inches(1.4), color=AMBER, size=14)
+callout(s, "Chỉ tiền xử lý văn bản là giúp.\nMetadata và kiến trúc thì không.",
+        Inches(6.75), Inches(4.75), Inches(5.8), Inches(1.4), size=15)
+notes(s, "Hai đối chứng đầu là về dữ liệu. Bỏ gần trùng làm cả hai mô hình mất điểm, nghĩa là split "
+         "ngẫu nhiên được lợi không chỉ từ bản sao y hệt mà từ văn mẫu gần giống. Chuẩn hoá teencode là "
+         "can thiệp duy nhất có tác dụng, và chỉ với mô hình phẳng. Dòng cuối là bài kiểm tra khó nhất: "
+         "không category nào trong test từng thấy khi huấn luyện, cả hai tụt khoảng 4 điểm.")
 
 # ---------------------------------------------------------------- 16. errors
 s = slide()
