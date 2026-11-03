@@ -1,0 +1,16 @@
+{
+  "official": {
+    "test_rows_matching_train": 38,
+    "distinct_test_texts_matching_train": 35,
+    "rows_in_duplicate_groups": 213,
+    "rows": 19870,
+    "unique_texts": 19750
+  },
+  "disjoint": {
+    "test_rows_matching_train": 30,
+    "distinct_test_texts_matching_train": 28,
+    "rows_in_duplicate_groups": 213,
+    "rows": 19870,
+    "unique_texts": 19750
+  }
+}

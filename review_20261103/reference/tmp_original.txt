@@ -1,0 +1,1618 @@
+                                        August 2, 2024     0:26    main
+
+
+
+
+                                                  International Journal of Asian Language Processing
+                                                  © World Scientific Publishing Company
+arXiv:2405.13292v2 [cs.CL] 1 Aug 2024
+
+
+
+
+                                                     Metadata Integration for Spam Reviews Detection on Vietnamese
+                                                                          E-commerce Websites
+
+
+                                                                                               Co Van Dinh
+                                                  Faculty of Information Science and Engineering, University of Information Technology, Ho Chi
+                                                                                      Minh City, Vietnam
+                                                                    Vietnam National University, Ho Chi Minh City, Vietnam
+                                                                                    19521293@gm.uit.edu.vn
+
+                                                                                                Son T. Luu∗
+                                                  Faculty of Information Science and Engineering, University of Information Technology, Ho Chi
+                                                                                      Minh City, Vietnam
+                                                                    Vietnam National University, Ho Chi Minh City, Vietnam
+                                                                                        sonlt@uit.edu.vn
+
+
+                                                                                       Received (Day Month Year)
+                                                                                       Revised (Day Month Year)
+
+
+                                                         The problem of detecting spam reviews (opinions) has received significant attention in
+                                                         recent years, especially with the rapid development of e-commerce. Spam reviews are
+                                                         often classified based on comment content, but in some cases, it is insufficient for models
+                                                         to accurately determine the review label. In this work, we introduce the ViSpamReviews
+                                                         v2 dataset, which includes metadata of reviews with the objective of integrating sup-
+                                                         plementary attributes for spam review classification. We propose a novel approach to
+                                                         simultaneously integrate both textual and categorical attributes into the classification
+                                                         model. In our experiments, the product category proved effective when combined with
+                                                         deep neural network (DNN) models, while text features performed well on both DNN
+                                                         models and the model achieved state-of-the-art performance in the problem of detecting
+                                                         spam reviews on Vietnamese e-commerce websites, namely PhoBERT. Specifically, the
+                                                         PhoBERT model achieves the highest accuracy when combined with product description
+                                                         features generated from the SPhoBert model, which is the combination of PhoBERT and
+                                                         SentenceBERT. Using the macro-averaged F1 score, the task of classifying spam reviews
+                                                         achieved 87.22% (an increase of 1.64% compared to the baseline), while the task of iden-
+                                                         tifying the type of spam reviews achieved an accuracy of 73.49% (an increase of 1.93%
+                                                         compared to the baseline).
+
+                                                         Keywords: spam reviews detection; deep learning; bert; metadata integration
+
+
+                                                  1. Introduction
+                                                  In recent years, e-commerce in Vietnam has witnessed rapid and strong develop-
+                                                  ment. Many e-commerce platforms have emerged and operated in Vietnam, chang-
+
+                                                  ∗ Corresponding author
+
+
+
+                                                                                                     1
+August 2, 2024   0:26     main
+
+
+
+
+          2   Pre-print
+
+
+          ing the way consumers shop. The number of consumers who shop online in Vietnam
+          has significantly increased in recent years. According to statistics 1 , now over half
+          of the Vietnamese population participates in online shopping on e-commerce web-
+          sites. This is due to the convenience it brings to users, as they do not need to visit
+          the stores directly but can simply make a few clicks on their digital devices, and
+          their orders will be delivered to their doorsteps. However, this has also led to some
+          users being deceived into buying fake or low-quality items that do not match the
+          descriptions. As a result, this is negatively impacting the experiences of consumers
+          when using online shopping services.
+              The shopping behavior of customers is significantly influenced by the reviews
+          provided by customers who have purchased the product previously. Customers tend
+          to look at reviews and feedback about a product to decide whether or not to pur-
+          chase it. With the vast development of e-commerce platforms, the opinion and
+          experience of users about the product or company is the key source of informa-
+          tion for the customers 2 . Catching up with this behavior, some sellers create fake
+          reviews that do not reflect the actual quality of the product, or some other users
+          intentionally create negative reviews to damage the reputation of the store 3,4,5 . In
+          addition, the e-commerce platforms encourage users to review products to receive
+          vouchers, which results in reviews that are completely irrelevant to the product.
+          These reviews are called spam reviews because it is not useful for users. Moreover,
+          they can easily be misled into buying low-quality products that do not match the
+          description. Therefore, removing these spam reviews helps users avoid purchasing
+          low-quality products and provides a better shopping experience.
+              In 6 , the authors introduced the ViSpamReviews dataset for detecting spam
+          reviews based on user comments. However, through experimentation and error
+          analysis, we found that using only user comments was not enough to accurately
+          determine whether a review was spam or not. This is because some comments do
+          not provide sufficient information related to the product, which makes it difficult
+          for the model to predict the label of the review and leads to inaccurate predictions.
+          Therefore, in this work, we released the ViSpamReviews v2 dataset, which was con-
+          structed on the previous dataset. In this version, in addition to comments and star
+          ratings, we also collected some product-related information including product cat-
+          egory, product name, product description, number of sold, and number of reviews.
+          This information, also known as metadata, can be integrated into the classification
+          model to improve its accuracy compared to using only user comments to detect
+          spam reviews in online e-commerce platforms.
+              Our main contributions to this research are as follows:
+
+                 • Firstly, we introduce the ViSpamReviews v2 dataset, which includes user
+                   reviews and metadata for the task of detecting spam reviews on Vietnamese
+                   e-commerce websites. In this new dataset, we add the metadata for each
+                   comment from the ViSpamReview 6 without changing its annotated label.
+                 • Secondly, we propose a method to integrate metadata for the problem of
+August 2, 2024   0:26   main
+
+
+
+
+              Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites   3
+
+
+                   spam review classification based on combining categorical 7 and textual
+                   attributes 8 to deep neural networks for the spam detection task.
+                 • Finally, we perform multiple experiments to evaluate the results of the
+                   metadata combination methods on various classification methods.
+              The paper is structured as follows. Section 1, introduces our research as pre-
+          sented above. Section 2, surveys relevant research on the problem of online spam
+          detection and the methods for integrating metadata into the classification mod-
+          els. Section 3, introduces our ViSpamReviews v2 dataset, analyzes the metadata
+          in the new dataset, and proposes a method for integrating product category and
+          description into our problem. Section 4, presents the steps of data preprocessing,
+          implementation of experimental parameters, the results of our experiments, and
+          analyzes the errors for each method. Finally, Section 5 concludes our research.
+
+          2. Related Works
+          Jindal and Liu introduced the task of Spam Reviews 3,9 to minimize the problem of
+          spreading unreliable opinions about products or services and preserve the trustwor-
+          thiness of potential customers on e-commerce platforms. With the vast development
+          of e-commerce website platforms, the spam reviews task plays an important role in
+          helping customers find reliable opinions about a product as a reference in shopping
+          online. Besides, the spam reviews task also helps the shop owner access valuable
+          reviews to improve the quality of products and services and attract the trustwor-
+          thiness of current and potential customers. The spam reviews task is categorized as
+          the text classification task 3 . As shown in 10,11,12 , deep neural models (DNN) such
+          as LSTM 13 , GRU 14 , and TextCNN 15 outperform the text classification task for
+          Vietnamese languages in comparison with the traditional models such as Logistic
+          Regression and SVM. In addition, according to the benchmark evaluation works
+          in 16 , the BERTology models 17 fine-tuned on Vietnamese social text also bring
+          state-of-the-art results. Therefore, we use deep neural networks and BERTology
+          approaches to construct the classification model for the spam detection task. Be-
+          sides, the SentenceBERT 8 is a powerful model to retrieve the potential information
+          from sentences in texts such as users’ reviews and descriptions of products.
+              In Vietnamese, the ViSpamReviews 6 is a large-scale dataset for spam review
+          detection with 19K reviews from users on Vietnamese e-commerce platforms. The
+          dataset is manually annotated by humans and conducts a ground-truth process by
+          major voting. The authors also provide several baseline methodologies based on
+          deep neural network and transformer-based language models and obtain optimistic
+          results. Also, Najadat et al. 18 provide a dataset for online spam review detection
+          on social networks in Arabic. However, according to 19 , with the vast increment of
+          customer reviews on e-commerce and the requirement of enterpriser to find valuable
+          information about the products from customers’ reviews, it is necessary to integrate
+          the extra information about the product features with the texts of the reviews from
+          users to improve the models. To extract the metadata for spam detection, authors
+August 2, 2024   0:26     main
+
+
+
+
+          4   Pre-print
+
+
+          in 20 use the behaviors (review contents, rating, and product information) combined
+          with text mining based on review texts from users and graph-based methodology to
+          model the relationship between user, reviews, and products. However, with the vast
+          information on e-commerce platforms, the graph for representing the relationship
+          between users and products will be enormous and complicated, which challenges
+          computing resources to perform calculations. Hence, the potential approaches are
+          based on the content of both users and products on the e-commerce websites, in-
+          cluding the review texts, categories of products, names of products and brands, and
+          product description texts. In 7 , the authors integrate the categorical information of
+          products with the review text of users and showed an improvement in the Review
+          Sentiment Tasks performance. Additionally, Cao et al. 19 extract the features of
+          products by semantic-based methods including LDA clustering for feature words
+          and pos-tag extraction to extract the linguistic information from review texts.
+              The metadata improves the text classification model by providing extra infor-
+          mation and semantic context. According to 21 , there are two main approaches to de-
+          tecting spam reviews from customers, including content-based and behavior-based.
+          Content-based focuses on the linguistic characteristics of textual reviews from users
+          22
+             while behavior-based aims to extract the behavior of users’ reviews according to
+          the integration of users to others such as the number of reviews, product rating,
+          the aspects, categories, and the properties of products 23 . The combination of both
+          approaches can exploit the behavior and the subjectivity of users in the product
+          review, which is helpful for detecting whether the review is spam or not. There are
+          several works proved that the integration of external information boosts the perfor-
+          mance of the classification model such as the work in 24 integrates the prior knowl-
+          edge of word sentiment to the LDA model, the work in 25 combines the product
+          attributes with deep neural network for the sentiment analysis based on product
+          reviews. In particular, Li 26 proposed a multimodel approach that combines not
+          only the text but also the picture to extract the users’ opinions from online tourism
+          reviews, and the works in 27,28 constructed a graph neural network that treating
+          the relationship between authors and the aspects of the review including the title,
+          category, and the review content. These works are robust, but they require a com-
+          plex representation of data to contribute the metadata of users’ behavior with the
+          reviews. In this paper, we proposed a simple method but efficient that can inte-
+          grate the available external metadata features from products and users’ reviews to
+          enhance the ability of the spam detection system.
+
+          3. Methodology
+          3.1. The Dataset
+          In 6 , the authors introduced the dataset and provided detailed descriptions of the
+          labels for the spam detection task. NO-SPAM are regular reviews that provide
+          helpful information for buyers to get an overview of the product. SPAM are reviews
+          that are either not truthful or provide unhelpful information to users. These spam
+August 2, 2024       0:26           main
+
+
+
+
+               Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites                                                                                      5
+
+
+          reviews are categorized into three types. The SPAM-1 (fake review) deceives
+          users by providing negative comments about the product to damage the store’s
+          reputation or raising seeding to a product by hallucinating comments. Next, the
+          SPAM-2 (review on brand only) only focuses on the brand, manufacturer, or
+          seller except for the quality of the product. Finally, the SPAM-3 (non-review)
+          reviews are which do not mention anything relevant to the products. The dataset
+          in 6 comprises two tasks: Task 1 for determining whether the reviews are spam or
+          not spam, and Task 2 for classifying the types of spam reviews.
+
+
+
+           Shopee   Thời Trang Nữ   Áo   Áo thun   [ Rẻ vô địch ] Áo thun có cổ , áo polo form rộng tay lỡ - CRHSUR
+
+                                                   (1)                                 Yêu Thích    [ Rẻ vô địch ] Áo thun có cổ , áo polo form rộng tay lỡ - CRHSU
+                                                                                       4.5                      5,9k Đánh Giá           21,2k Đã Bán                              T
+                                                                                                                                                                           (2)
+                                                                                                         (3)                                       (4)
+                                                                                          ₫75.000 ₫40.000                     47% GIẢM
+
+
+                                                                                                   Gì Cũng Rẻ
+                                                                                                   Giá tốt nhất so với các sản phẩm cùng loại trên Shopee!
+
+
+
+                                                                                          Bảo Hiểm             Bảo hiểm Thời trang      Mới        Tìm hiểu thêm
+
+
+                                                                                          Vận Chuyển                  Miễn phí vận chuyển
+
+                                                                                                                      Vận Chuyển Tới          Phường Tràng Tiền, Quận Hoàn Kiếm
+                                                                                                                      Phí Vận Chuyển          ₫0
+
+
+                                                                                          Màu Sắc                   Đen            Trắng
+
+
+
+                                                                                          Số Lượng                      1              128296 sản phẩm có sẵn
+
+
+
+
+                                                                                                    Thêm Vào Giỏ Hàng                    Mua Ngay
+
+
+
+
+              MÔ TẢ SẢN PHẨM
+
+                 ❄️mã này hàng lên bao nhiêu vẫn không đủ cấp í
+                 ❄️Năm nay xưởng vẫn lên mẫu phục vụ mọi người nhé.
+                 ❄️Diện team, mặc đôi ưng xỉu đó ạ                       (5)
+                 ❄️Freesize: Phom 38-65kg mặc đẹp nha!
+
+
+
+                                            Fig. 1: The metadata is collected from Shopee.
+
+
+
+              In the ViSpamReviews v2 dataset, we have collected additional information re-
+          lated to the products (metadata) for each review without modifying the previous
+          annotated label. Some of the information we have gathered from Shopee a is il-
+          lustrated in Figure 1, which encompasses product category (1), product name (2),
+          number of ratings (3), number of sold items (4), and product description (5). In
+          addition, we illustrate a review and its metadata in Table 1.
+
+
+
+          a https://shopee.vn/
+August 2, 2024        0:26   main
+
+
+
+
+          6    Pre-print
+
+
+                         Table 1: An example review in the ViSpamReviews v2 dataset.
+
+              Star rating           5
+
+              Comment               Vietnamese: Dùng tốt, sạc rất nhanh nên mau nóng máy, hạn chế ko dùng lúc đang sạc
+                                    để khỏi phỏng tay. Sản phẩm hoàn thiện tốt về thiết kế, mình thấy chả có gì để chê. Lúc
+                                    mình mua áp các loại mã giảm chỉ còn có 280k thui, freeship tikinow. Chỉ 1 giờ là giao tới
+                                    nơi.
+                                    (English: Performs well, charges very quickly but heats up quickly too, so it’s recommended
+                                    not to use while charging to avoid burning your hands. The product has a good design, I
+                                    have nothing to complain about. I bought it with a discount code for only 280k VND and
+                                    free shipping with Tikinow. It was delivered in just one hour.)
+
+              Category              Vietnamese: Điện tử
+                                    (English: Electronics)
+
+              Product name          Vietnamese: Adapter Sạc 1 Cổng Anker 18W/20W PowerPort III Nano Tích Hợp PowerIQ
+                                    3.0 - Hàng Chính Hãng
+                                    (English: Anker 18W/20W PowerPort III Nano 1-Port Charger Adapter with PowerIQ 3.0
+                                    Integration - Genuine Product)
+
+              Description           Vietnamese: PowerPort III Nano Adapter Sạc 1 Cổng Anker 18W/20W PowerPort III
+                                    Nano Tích Hợp PowerIQ 3.0 có thiết kế nhỏ gọn 18W tích hợp PowerIQ 3.0 mang đến tốc
+                                    độ sạc nhanh chóng. Thiết kế nhỏ gọn tiện mang đi Với kiểu dáng nhỏ gọn chỉ 30g, bằng
+                                    trọng lượng với pin tiểu AA; tuy nhỏ nhưng đây là loại adapter sạc mạnh mẽ mà bạn không
+                                    ngờ đến. Nhờ vào việc thay đổi kích cỡ, adapter sạc với tốc độ nhanh dễ dàng để bỏ vào
+                                    ví, túi khi ra ngoài, tiện lợi mang đi mọi nơi. Công nghệ sạc cao cấp Mang đến tốc độ sạc
+                                    nhanh chóng cho mọi loại điện thoại và tablets có cổng kết nối USB-C (bao gồm cả iPhone
+                                    và iPad) nhờ vào công nghệ Power Delivery. Tiện lợi cho mọi thiết bị...
+                                    (English: Anker PowerPort III Nano 1-Port 18W/20W Adapter with PowerIQ 3.0 Inte-
+                                    gration is designed with a compact size for fast charging. The small and lightweight design,
+                                    weighing only 30g, which is equivalent to a AA battery, is a powerful charger that you would
+                                    not expect. With a size change, the fast charging adapter is easy to put in your wallet or
+                                    bag when you go out, and convenient to take anywhere. High-end charging technology en-
+                                    sures fast charging for all types of phones and tablets with a USB-C connection (including
+                                    iPhones and iPads) thanks to Power Delivery technology. It is compatible with a wide range
+                                    of devices...)
+
+              Number of sold        11873
+
+              Number of reviews     3722
+
+              Label                 NO-SPAM
+
+              Spam label            –
+
+
+
+
+                 Table 2: The number of labels for the reviews in each set after the resplit.
+                                                        Train              Dev                Test
+                               NO-SPAM                  10,490             1,182              2,911
+                                SPAM-1                   211                17                  54
+                                SPAM-2                  1,103               120                309
+                                SPAM-3                  2,480               270                689
+                                 Total                  14,284             1,589              3,963
+
+
+              After collecting additional metadata, we resplit the dataset into train and test
+          sets with a ratio of 8:2, respectively. In the training phase, we allocate 10% of the
+August 2, 2024    0:26     main
+
+
+
+
+              Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites    7
+
+
+          training set to serve as the development set. The distribution of review samples for
+          each label is depicted in Table 2. Besides, some characteristics of the new dataset,
+          such as the number of reviews, vocabulary size, and the average length of comments
+          in each dataset, are presented in Table 3.
+
+          Table 3: The statistical characteristics of the new dataset (vocabulary size and
+          average length are calculated based on word count).
+
+                                                   Train         Dev          Test           All
+           The number of reviews                   14,284        1,589        3,963        19,836
+           Vocabulary size                         17,196        4,414        8,144        21,405
+           Average length of comments              17.38         16.92        17.37         17.35
+
+
+          3.2. Metadata Analysis
+          The gathered attributes encompass the product category, product name, product
+          description, number of ratings, and number of sold. E-commerce platforms have
+          different strategies to categorize various product categories, but there are still com-
+          monalities among them. We built a dictionary to merge the categories on Shopee
+          and Tiki together, and then we analyzed the number of spam reviews for each prod-
+          uct category in Table 4. Moreover, Figure 2 depicts a graphical representation of
+          the label ratios for classifying different types of spam reviews.
+
+                  Table 4: Statistics of the number of labels by each product category.
+
+                 Category            Total     NO-SPAM         SPAM       Spam rate (%)
+
+                 Fashion              2,964        1,947        1,017           34.31
+                 Electronic           2,905        2,476         429            14.77
+                 Others               2,462        1,662         800            32.49
+                 Phone - Computer     2,307        1,752         555            24.06
+                 Beauty               1,891        1,323         568            30.04
+                 Home - Life          1,838        1,354         484            26.33
+                 Toy                  1,675        1,212         463            27.64
+                 Sport                1,085         868          217            20.00
+                 Camera                805          647          158            19.63
+                 Vehicel               771          565          206            26.72
+                 Footwear              574          389          185            32.23
+                 Book                  559          405          154            27.55
+August 2, 2024   0:26                    main
+
+
+
+
+          8   Pre-print
+
+
+              According to Table 4, there are a total of 12 categories after the consolidation.
+          It is observed that the occurrence of spam reviews is not evenly distributed across
+          each category, with Fashion, Beauty, Footwear, and Others categories exhibiting
+          higher spam ratios compared to the rest. This is reasonable as there are some highly
+          popular products with a large volume of sales, resulting in a higher proportion of
+          spam reviews. Additionally, the distribution of spam labels is also disparate, with
+          some categories having a higher prevalence of SPAM-2 and SPAM-3 labels, such
+          as Fashion, Beauty, Toy, and Others. Hence, this information proves useful in both
+          spam review classification and identifying types of spam review tasks.
+
+                                                      NO-SPAM                                       SPAM-1                         SPAM-2                         SPAM-3
+
+
+                                         3,000
+
+
+                                         2,500
+                     Number of reviews
+
+
+
+
+                                         2,000
+
+
+                                         1,500
+
+
+                                         1,000
+
+
+                                          500
+                                                 Fashion
+
+                                                           Electronic
+
+                                                                        Others
+                                                                                 Phone - Computer
+
+                                                                                                    Beauty
+
+                                                                                                             Home - Life
+                                                                                                                           Toy
+
+                                                                                                                                 Sport
+
+                                                                                                                                         Camera
+
+                                                                                                                                                  Vehicel
+
+                                                                                                                                                            Footwear
+
+                                                                                                                                                                       Book
+
+
+
+
+                               Fig. 2: Distribution of labels for reviews by product category.
+
+
+              In the task of identifying the type of spam reviews, prediction models often en-
+          counter higher mispredictions on the SPAM-2 label due to incomplete information
+          provided in the comments of reviews. Thus, it is necessary to consider which at-
+          tributes are important to combine between the product name and product descrip-
+          tion. The average length of textual attributes for each label of reviews, computed
+          at the word level, is presented in Table 5.
+August 2, 2024                        0:26   main
+
+
+
+
+                                  Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites                                                                9
+
+
+          Table 5: The average length of textual attributes on the train set (calculated based
+          on word count).
+                                                                                      NO-SPAM                                   SPAM-1           SPAM-2               SPAM-3
+                    Average length of comments                                          17.74                                    25.12              13.82                16.76
+                    Average length of product names                                     15.11                                    14.36              15.07                15.06
+                    Average length of descriptions                                     239.30                                    235.71             248.76              225.42
+
+
+
+              According to Table 5, we need to pay attention to the length of the SPAM-2
+          label, which has the shortest comment length of only 13.82, while the product de-
+          scription has a longer length compared to the product name, with average lengths
+          of 15.07 and 248.76, respectively. Additionally, we also illustrate the length distri-
+          bution of product names and product descriptions on the training set in Figure 3.
+          Comparing product names and product descriptions, we observe a significant dif-
+          ference, where the length of product descriptions ranges from 100 to 400, while the
+          length of product names only ranges from 5 to 25. Specifically, the product name
+          usually has a shorter length, typically consisting of brand names and product codes,
+          whereas the product description is often written by sellers to provide detailed in-
+          formation about the characteristics, features, and uses of the product, resulting in
+          a longer average length. Comments of reviews typically have a stronger association
+          with product descriptions rather than product names (which primarily relate to
+          brand names in the SPAM-2 labels). Therefore, we employ the product description
+          as a supplementary text attribute to integrate into the classification model.
+
+
+                                  1,000
+                                                                                                                        1,000
+                                   800
+          The number of reviews
+
+
+
+
+                                                                                                The number of reviews
+
+
+
+
+                                                                                                                         800
+                                   600
+                                                                                                                         600
+                                   400
+                                                                                                                         400
+
+                                   200                                                                                   200
+
+                                     00      10          20           30         40    50                                  0 0           200        400         600         800   1,000
+                                                  The length of the product name                                                          The length of the product description
+
+          Fig. 3: Distribution of product name and product description lengths (calculated
+          based on word count) on the training set.
+
+
+             We consider the two remaining attributes: number of sold and number of rat-
+          ings. Due to differing market shares, the dissimilarities in the number of buyers
+          across the two platforms, result in variations in the quantities of sales and reviews.
+          Consequently, these attributes are not suitable for integration into the model if the
+August 2, 2024      0:26     main
+
+
+
+
+          10     Pre-print
+
+
+          reviews are not from the same e-commerce platform.
+
+
+          3.3. Metadata Integration
+          We propose a method to integrate metadata for the task of classifying spam reviews,
+          as shown in Figure 4. In this approach, we leverage metadata consisting of textual
+          attributes and categorical variables, to enhance the classification of spam reviewsb .
+
+
+                                                   PhoBERT
+                                                                                                              Phase 1: Fine-tune SBERT
+                                                                          Pooling       u
+                                                  BERT4News
+                                    Description
+
+
+                                                                                                    Wt(u, v, |u-v|)      Softmax Classifier
+
+
+                                                   PhoBERT
+                                                                          Pooling       v
+                                                  BERT4News
+                                    Comment
+                                                                                                                             Sentence
+                                                                                                                            Embedding
+           Pre-processing
+
+
+                                                             SBERT Model
+                                                             (Fine-tuned)
+                                    Description
+                                                              Inference
+                                                                                                               Basis Cust Bias
+                                                                                    Concatenation
+                                                                                                              Basis Cust Linear
+
+                                                               Text-CNN
+
+                                                       BiLSTM         BiGRU
+                                                                                                                                       Output
+                                    Comment            PhoBERT      BERT4News
+
+
+
+
+                 ViSpam-
+                 Reviews
+                                    Categorical                                                         Phase 2: Features Integration
+
+
+          Fig. 4: An overview of the proposed method for integrating metadata in spam
+          reviews detection.
+
+
+              To integrate metadata into the spam review classification model, we present two
+          distinct but interconnected phases as follows:
+
+                   • Phase 1 - Fine-tune SBERT: Firstly, for the textual attribute, we fine-
+                     tune an SBERT (Sentence-BERT) model 8 to learn representations captur-
+                     ing the relationship between the product description and user comments.
+                     SBERT is a deep learning model pretrained to generate semantically mean-
+                     ingful sentence embeddings. Fine-tuning the model with labeled reviews
+                     enhances its ability to comprehend the semantic context of product descrip-
+                     tions, aiding in the determination of their correlation with user comments.
+                     This training is conducted only once, after which the fine-tuned model
+                     can be used to generate features for subsequent training stages and during
+                     inference on real data, resulting in savings in terms of cost and training
+                     time.
+
+          b Source code is available at https://github.com/sonlam1102/vispamdetection
+August 2, 2024   0:26   main
+
+
+
+
+             Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites   11
+
+
+                 • Phase 2 - Features Integration: This is the stage where we integrate
+                   metadata features to train the label classification model for reviews. In this
+                   stage, we simply concatenate the embedded vector of the product descrip-
+                   tion which is inferred from the SBERT model with the textual feature,
+                   which in this case is the user comment. We create a fused representation of
+                   the textual information by concatenating these two vectors. Subsequently,
+                   we incorporate the product category into the previously created represen-
+                   tation. This is achieved using a proposed method by Kim et al 7 , we experi-
+                   mented with two methods of combining categorical features for the highest
+                   effectiveness on the Yelp 2013 dataset 29 as presented by the author, namely
+                   at the bias vector level and linear transformation. These two levels of com-
+                   bination correspond to the Basis Cust Bias and Basis Cust Linear block
+                   in our illustration. Further details on this method will be presented below.
+                   Finally, after obtaining the representation of the textual information and
+                   metadata, we employ a softmax classifier to predict the label.
+
+              Note that fine-tuning the SBERT model is solely for generating features for
+          product description texts accompanying each review comment, and it is reused to
+          produce features for product descriptions for later inference, combined with the
+          classifier when predicting labels for a review. Both the SBERT model and the
+          classifier model are trained on labeled data and provide the final decision on the
+          label of the review based on this fused representation. A significant highlight of
+          the method presented above is that it helps save computational costs and training
+          time, alongside its flexibility to combine with various other features including text
+          and categorical features.
+
+
+          3.3.1. Product Description
+          In the analysis errors of the previous publication 6 , we indicated that relying solely
+          on the user’s comment is inadequate for the classifier to predict the label of the
+          reviews accurately. We believe that the product description is the most suitable
+          attribute to indicate whether the user’s comment is related to the product or not.
+          As mentioned in the label descriptions, a review is considered non-spam if the user’s
+          comment is helpful and relevant to the product. In contrast, spam reviews typically
+          have content that is unrelated to the product, especially in the case of spam type 3.
+          Hence, by representing the product description as a vector, it becomes possible to
+          capture the similarity between it and the comment, allowing for their combination
+          into the classifier and potentially improving the model’s accuracy.
+              There are many methods that have been researched for sentence embedding, and
+          SBERT is a model proposed to utilize BERTology models (BERT / RoBERTa) 17
+          for generating document representations. This approach has been demonstrated to
+          provide the best effectiveness in learning the semantic relationships between docu-
+          ments. Taking advantage of the benefits of this model, we performed fine-tuning on
+August 2, 2024     0:26      main
+
+
+
+
+          12     Pre-print
+
+
+          SBERT using two pre-trained Vietnamese models comprised of PhoBERT 30 and
+          BERT4News 31 , in order to generate embedding vectors for product descriptions.
+              Initially, the comment and the corresponding product description are fed into
+          BERTology models, an operation added to SBERT compared to regular BERT,
+          which includes pooling to derive a fixed-sized sentence embedding. We employ a
+          pooling strategy MEAN pooling to compute the mean of all output vectors, thereby
+          generating two vectors of equal size: the comment embedding vector (u) and the
+          product description embedding vector (v). Subsequently, these sentence embeddings
+          are concatenated with the element-wise difference |u − v| and multiply it with the
+          trainable weight Wt ∈ R3n×k , finally passed into a softmax classifier as in the
+          equation:
+
+
+                                      o = sof tmax(Wt (u, v, |u − v|))
+             With n is the dimension of the sentence embeddings and k is the number of
+          labels. The loss function used is Cross-Entropy.
+
+          3.3.2. Product Category
+          Customized text classification is introduced to customize the classifier based on
+          categorical metadata information rather than only using text features. We incorpo-
+          rate a product category of the reviews, which is a common attribute found in any
+          e-commerce platform. We observe that some spam reviews have a higher frequency
+          of occurrence in certain product categories. Therefore, we combine this information
+          to enhance the classification performance of the models. There are multiple meth-
+          ods to integrate the categorical variables into the classification model at different
+          levels, including customizing the bias vector, customizing the word embeddings
+          29
+             , customizing the attention pooling 32 , customizing on the linear transformation
+          and customize on the encoder weights 7 . The method of customizing on the linear
+          transformation has demonstrated effectiveness on some datasets. Therefore, we ex-
+          periment with this method on our ViSpamReviews v2 dataset and we also evaluate
+          the effectiveness of customizing on the bias vector.
+               In general, in the classifier, we have a text representation vector d and cate-
+          gory vectors c1 , c2 , ..., cm , a learned weight matrix W (c) and a bias vector b(c) . For
+          customizing on bias vector, instead of using a single bias vector b(c) in the logistic
+          regression classifier, the model uses additional multiple bias vectors for each cate-
+          gory. This method is similar to concatenating the features of the categorical variable
+          with the text vector d and the derivative is given by the following equation:
+
+
+                                      y ′ = W (c) [d; c1 ; c2 ; ...; cm ] + b(c)                 (1)
+            As for customizing on linear transformation, instead of using a single weight
+          matrix W (c) in the logistic regression classifier, the model uses different weight
+          matrices for each category, and the derivative is given by the equation:
+August 2, 2024   0:26   main
+
+
+
+
+             Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites                       13
+
+
+
+
+                                      y ′ = Wc(c)
+                                               1
+                                                  d + Wc(c)
+                                                         2
+                                                            d + ... + Wc(c)
+                                                                         m
+                                                                            d + b(c)                                (2)
+              In addition to the conventional customized methods, basis-customized is also
+          proposed to address some of its limitations. This method use a trainable set of
+          bias vectors B = {b1 , b2 , ..., bd }, with d << dim (dim is the dimension of the orig-
+          inal weights). The vector search space V that contains all the optimal customized
+          weights vc , such that B is the basis of Vc . The vectors v ∈ V are calculated using
+          the equation:
+
+                                                              X
+                                                       vc =            γ i ∗ bi                                     (3)
+                                                                   i
+
+             Where γ represents the coefficients and are calculated based on the following
+          equations:
+
+                                                           zi = q T ki
+                                                            exp(zi )                                                (4)
+                                                      γi = P
+                                                             i exp(zj )
+
+             With q is the query vector that concatenated category vectors q = [c1 ; c2 ; ...; cm ]
+          and ki ∈ K|K = {k1 , k2 , ..., kd } is a trainable set of key vectors.
+
+
+          4. Results and Discussion
+          4.1. Data Preprocessing
+          The reviews in the dataset are created by users to be posted on an online e-
+          commerce platform, which requires preprocessing before training the model. We
+          perform data cleaning of the comment sentences and product descriptions, follow-
+          ing the process illustrated in Figure 5.
+
+
+                                           Character                        Word             Remove stopword
+                                         Chuẩn hóa ký tự                  Tách từ (1)        Loại bỏ stopword (2)
+                                         normalization                 tokenization (1)               (2)
+
+
+                   ViSpamReviews v2
+
+
+
+
+                                                                                          Remove emoji, link,
+                                                      Text lowercase
+                                                                                            tag, email... (3)
+
+
+                    Cleaned dataset
+
+
+                                        Fig. 5: Data preprocessing pipeline.
+
+
+             The steps in the process are described as follows:
+August 2, 2024     0:26      main
+
+
+
+
+          14     Pre-print
+
+
+                   • Step 1: Text normalization to a uniform format. We observed that some
+                     comments, despite having similar structural content, are not considered
+                     identical, potentially due to the presence of different Unicode characters.
+                     Some tokenization tools may struggle to accurately recognize and tokenize
+                     this text. As a result, we standardize the user comments and product de-
+                     scription content to ensure uniformity.
+                   • Step 2: Word tokenization using the VnCoreNLP tool c . Pretrained mod-
+                     els can be trained with tokenized text, so we preprocess the data to ensure
+                     compatibility with the model. Additionally, in some cases, word tokeniza-
+                     tion can enhance the performance of models.
+                   • Step 3: Removing Vietnamese stopwordsd . These are frequently encoun-
+                     tered words in the text that hold little semantic value. By eliminating
+                     stopwords, the model can better learn from the meaningful content within
+                     the text. Therefore, we remove Vietnamese stopwords on both the comment
+                     and description attributes.
+                   • Step 4: Removing emojis, links, tags, emails... This step is specifically
+                     applied to the product description. In the case of user comments, emojis
+                     are also one of the factors that affect the label of the review, and comments
+                     that contain only emails or tags, or links are classified as spam according
+                     to the annotation guidelines. Hence, this step is exclusively conducted on
+                     the product description, where these types of content are commonly found.
+                   • Step 5: Converting all characters in the text to lowercase.
+
+
+          4.2. Experiment Settings
+          We conducted experiments on two tasks as outlined in the previous publication
+          6
+            : determining whether the reviews are spam or not (Task 1) and identifying the
+          type of spam reviews (Task 2). In order to evaluate the efficacy of the metadata
+          integration methods, we carried out experiments on different deep neural network
+          (DNN) models, specifically TextCNN 15 , BiLSTM 13 and BiGRU 33 . In addition,
+          we also employed transfer learning models in our experiments, namely BERTology
+          models with two pre-trained consisting of PhoBERT and BERT4News.
+               In the fine-tuning phase of the SBERT model (Phase 1), we set the max length
+          sequence is 100 for both product descriptions and comments. Then, we fine-tuned
+          SPhoBert and SBert4News for 20 epochs and mini-batch size equal to 16. Following
+          that, we embedded the product descriptions and concatenated them with the en-
+          coder of the baseline models. As for the product category using the basis-customized
+          method, we set 64 dimensions for the category vector.
+               In the experimentation phase of training the classifier with metadata integration
+          (Phase 2), we also set the max length sequence of comments and descriptions to 100,
+
+          c https://github.com/vncorenlp/VnCoreNLP
+          d https://github.com/stopwords/vietnamese-stopwords
+August 2, 2024   0:26   main
+
+
+
+
+             Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites    15
+
+
+          the seed is set equal to 42 for all experiments. For DNN models, we trained them
+          for 40 epochs with mini-batch size of 256. We employ the Early Stopping technique
+          with patience is 10 and saved the best-performing model. As for the BERT models,
+          we performed fine-tuning PhoBERT and BERT4News for 10 epochs, batch size
+          equal to 16, and employed Early Stopping with patience is 3. The Cross-Entropy
+          loss function was used. The DNN models were configured with the following specific
+          parameters:
+
+                 • TextCNN: We utilized three Conv2D layers with 32 filters of sizes [2, 3, 5],
+                   the activation function is softmax, and the dropout is set to 0.5 to prevent
+                   overfitting.
+                 • BiLSTM and BiGRU: We employed the Bidirectional layer in both the
+                   LSTM and GRU encoder with the hidden size of 64. We then concatenated
+                   average pooling and max pooling, used the ReLU activation function, and
+                   also set the dropout to 0.5 as TextCNN.
+
+              Our experiments are performed on the Kaggle platform e with hardware speci-
+          fications are Intel(R) Xeon(R)CPU @ 2.30GHz and NVIDIA Tesla P100 GPU with
+          16GB RAM.
+
+
+          4.3. Evaluation Metrics
+          To assess the performance of the models, we use Accuracy and F1-score, which are
+          two essential metrics for classification problems 34 . These metrics serve to gauge the
+          model’s precision in classifying data points and also provide insights into the classifi-
+          cation performance for each class. The following section presents the methodologies
+          applied to compute these metrics in the context of each specific task.
+
+
+          4.3.1. Task 1
+          In this task, our objective is to classify reviews to determine whether they are spam
+          or not. Therefore, this is a binary classification problem with two classes: spam and
+          non-spam. The metrics are calculated using the formulas provided below.
+
+                                                         tp + tn
+                                      Accuracy =                                                 (5)
+                                                   tp + tn + f p + f n
+
+                                                            tp
+                                           Precision =                                           (6)
+                                                         tp + f p
+
+                                                           tp
+                                             Recall =                                            (7)
+                                                        tp + f n
+
+          e https://www.kaggle.com/
+August 2, 2024     0:26      main
+
+
+
+
+          16     Pre-print
+
+
+
+                                                    2 × Precision × Recall
+                                       F1-score =                                               (8)
+                                                      Precision + Recall
+              Where tp (true positive) is the number of reviews predicted to match the non-
+          spam label, f p (false positive) is the number of reviews with the spam label pre-
+          dicted as non-spam, tn (true negative) is the number of reviews predicted to match
+          the spam label, f n (false negative) is the number of reviews with the non-spam
+          label predicted as spam, respectively. Specifically, the F1-score is a combination of
+          the precision and recall metrics, aiming to balance the model’s performance in cases
+          where the data is imbalanced.
+
+
+          4.3.2. Task 2
+          As for this task, our goal is to determine the type of spam reviews. there are
+          three spam labels and one non-spam label, and the total number of labels to be
+          classified is four. Hence, this task is a multi-class classification problem. Similar to
+          the binary classification problem, Accuracy and F1-score are also adjusted to suit
+          the assessment objectives for multi-class classification. These metrics are calculated
+          according to the formulas presented below.
+
+                                                 Number of correct predictions
+                                    Accuracy =                                                  (9)
+                                                  Total number of predictions
+
+                                                             n
+                                                        1X        tpi
+                                          Precision =                                          (10)
+                                                        n i=1 tpi + f pi
+
+                                                         n
+                                                      1X        tpi
+                                           Recall =                                            (11)
+                                                      n i=1 tpi + f ni
+
+                                                    2 × Precision × Recall
+                                       F1-score =                                              (12)
+                                                      Precision + Recall
+              Where n is the number of classes in the classification problem. In this task, n
+          equals 4. tpi represents the true positive for the i-th class, f pi is the false positive,
+          tni is the true negative and f ni is the false negative, respectively. In the formulas,
+          the values of precision and recall metrics are calculated for each class, and then the
+          averages are computed. Finally, the F1-score is determined based on the resulting
+          precision and recall values.
+
+
+          4.4. Empirical Results
+          We use two metrics, namely Accuracy and macro-averaged F1-score as presented
+          in section 4.3, to evaluate the models. Table 6 illustrates the experimental results
+August 2, 2024   0:26   main
+
+
+
+
+             Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites   17
+
+
+          of the baseline models on the ViSpamReviews v2 corpus and their comparison with
+          models incorporating metadata. According to Table 6, among the baseline mod-
+          els (without metadata integration), PhoBERT achieves the highest Accuracy and
+          macro F1-score, obtaining 89.23% and 85.58% respectively for Task 1, and the corre-
+          sponding results are 87.79% and 71.56% for Task 2. Considering only DNN models,
+          BiLSTM demonstrates the highest Accuracy and F1-macro, reaching 76.55% and
+          61.04%, respectively. These results indicate that transfer learning models outper-
+          form conventional deep learning models in terms of performance.
+              Initially, we only incorporated the product category into the classifier using
+          customized-text classification methods, including customizing the bias vector (bias
+          cust and bias basis cust), and customizing the linear transformation matrix (lin-
+          ear cust and linear basis cust). The DNN models showed a significant increase in
+          accuracy when incorporating the category. Specifically, TextCNN demonstrated a
+          substantial improvement by achieving a 2.69% and 5.32% increase when combined
+          with linear basis cust. On the other hand, BiLSTM and BiGRU don’t show con-
+          siderable improvements on Task 2 and even performance decreases in some cases.
+          Nevertheless, these models demonstrated significant accuracy enhancement on Task
+          1, BiGRU was combined with linear basis cust, and the accuracy improved con-
+          siderably, with respective increases of 2.89% and 3.38% measured by F1-macro,
+          corresponding to Task 1 and Task 2. In contrast, the BERT models experienced a
+          decrease in accuracy when incorporating the category. Although the decrease was
+          not substantial and also there is a slight increase was observed, it is evident that the
+          category is effective only when combined with DNN models, while it is not effective
+          with BERT models.
+              Next, we evaluated the effectiveness of the classification models when incorpo-
+          rated with the product description. In our experiments, we employed both SPho-
+          Bert and SBert4News for the DNN models and we only combined SPhoBert and
+          SBert4News with PhoBERT and BERT4News models, respectively. According to
+          Table 6, the DNN models also showed significant improvements when combined
+          with SBert4News. Particularly, BiLSTM exhibited the most notable improvement
+          with F1-macro increasing by 2.98% and 4.73% for both tasks. For the BERT mod-
+          els, there were also improvements observed on PhoBERT for both tasks, resulting
+          in F1-macro increases of 1.64% and 1.93%, respectively. However, when combined
+          with BERT4News, the accuracy increased for Task 1 (by 0.72%) but decreased for
+          Task 2 (by 0.66%). These findings suggest that incorporating the product descrip-
+          tion into the classifier has the potential to enhance the efficiency of label prediction
+          for reviews.
+              Lastly, we conducted experiments to incorporate both the category and descrip-
+          tion of the product into the classifier. The combination types are selected rely on
+          the best results achieved for each attribute. When combining both attributes in
+          DNN models, we observed a significant increase in Accuracy and F1-macro, rang-
+          ing from approximately 1% to 4%. However, it is apparent that this combination
+          does not achieve higher results compared to each attribute, it has rebalanced the
+August 2, 2024     0:26      main
+
+
+
+
+          18     Pre-print
+
+
+                      Table 6: The experimental results on ViSpamReviews v2 dataset.
+                                                                         Accuracy (%)                    F1-macro (%)
+                  Model                  Metadata
+                                                                     Task 1          Task 2          Task 1          Task 2
+                              Original                                82.26           78.58           77.18           60.64
+                                            + bias cust           85.24(↑ 2.98)   80.55(↑ 1.97)   79.93(↑ 2.75)   64.28(↑ 3.64)
+                                            + bias basis cust     84.36(↑ 2.10)   80.47(↑ 1.89)   79.64(↑ 2.46)   63.77(↑ 3.13)
+                              Category
+                                            + linear cust         81.86(↓ 0.40)   79.33(↑ 0.75)   75.84(↓ 1.34)   59.22(↓ 1.42)
+                  TextCNN                   + linear basis cust   84.38(↑ 2.12)   82.44(↑ 3.86)   79.87(↑ 2.69)   65.96(↑ 5.32)
+                                            + SPhoBert            83.02(↑ 0.76)   79.84(↑ 1.26)   78.48(↑ 1.30)   60.84(↑ 0.20)
+                              Description
+                                            + SBert4News          83.35(↑ 1.09)   79.54(↑ 0.96)   78.80(↑ 1.62)   62.67(↑ 2.03)
+                                            + linear basis cust
+                              Both                                83.85(↑ 1.59)   80.32(↑ 1.74)   78.73(↑ 1.55)   64.97(↑ 4.33)
+                                            + SBert4News
+                              Original                                82.94           78.37           76.55           61.04
+                                            + bias cust           84.13(↑ 1.19)   79.59(↑ 1.22)   78.72(↑ 2.17)   61.11(↑ 0.07)
+                                            + bias basis cust     84.13(↑ 1.19)   78.20(↓ 0.17)   77.85(↑ 1.30)   61.53(↑ 0.49)
+                              Category
+                                            + linear cust         83.83(↑ 0.89)   79.99(↑ 1.62)   79.43(↑ 2.88)   61.10(↑ 0.06)
+                  BiLSTM                    + linear basis cust   85.21(↑ 2.27)   79.74(↑ 1.37)   79.93(↑ 3.38)   61.01(↓ 0.03)
+                                            + SPhoBert            84.13(↑ 1.19)   77.16(↓ 1.21)   79.33(↑ 2.78)   61.13(↑ 0.09)
+                              Description
+                                            + SBert4News          84.33(↑ 1.39)   80.72(↑ 2.35)   79.44(↑ 2.98)   65.77(↑ 4.73)
+                                            + linear basis cust
+                              Both                                84.51(↑ 1.57)   80.82(↑ 2.45)   80.43(↑ 3.88)   63.64(↑ 2.60)
+                                            + SBert4News
+                              Original                                83.12           77.44           77.86           60.95
+                                            + bias cust           84.28(↑ 1.16)   77.16(↓ 0.28)   79.94(↑ 2.08)   57.29(↓ 3.66)
+                                            + bias basis cust     84.58(↑ 1.46)   77.77(↑ 0.33)   79.71(↑ 1.85)   59.50(↓ 1.45)
+                              Category
+                                            + linear cust         82.64(↓ 0.48)   77.24(↓ 0.20)   77.10(↓ 0.76)   58.22(↓ 2.73)
+                  BiGRU                     + linear basis cust   84.83(↑ 1.71)   79.81(↑ 2.37)   80.75(↑ 2.89)   64.33(↑ 3.38)
+                                            + SPhoBert            84.05(↑ 0.93)   79.61(↑ 2.17)   79.53(↑ 1.67)   62.39(↑ 1.44)
+                              Description
+                                            + SBert4News          83.70(↑ 0.58)   77.01(↓ 0.43)   79.34(↑ 1.48)   62.39(↑ 1.44)
+                                            + linear basis cust
+                              Both                                84.89(↑ 1.77)   81.30(↑ 3.86)   79.71(↑ 1.85)   63.37(↑ 2.42)
+                                            + SPhoBert
+                              Original                                89.23           87.79           85.58           71.56
+                                            + bias cust           89.35(↑ 0.12)   88.54(↑ 0.75)   86.32(↑ 0.74)   71.07(↓ 0.49)
+                                            + bias basis cust     88.70(↓ 0.53)   87.61(↓ 0.18)   85.65(↑ 0.07)   72.19(↑ 0.63)
+                              Category
+                                            + linear cust         88.90(↓ 0.33)   87.48(↓ 0.31)   85.24(↓ 0.34)   69.93(↓ 1.93)
+                  PhoBERT
+                                            + linear basis cust   88.52(↓ 0.71)   87.64(↓ 0.15)   85.68(↑ 0.10)   70.12(↓ 1.44)
+                              Description   + SPhoBert            90.11(↑ 0.88)   88.06(↑ 0.27)   87.22(↑ 1.64)   73.49(↑ 1.93)
+                                            + bias cust
+                              Both                                89.20(↓ 0.03)   88.14(↑ 0.35)   85.71(↑ 0.13)   72.57(↑ 1.01)
+                                            + SPhoBert
+                              Original                                88.47           88.22           85.14           72.55
+                                            + bias cust           88.80(↑ 0.33)   87.59(↓ 0.63)   85.32(↑ 0.18)   71.58(↓ 0.97)
+                                            + bias basis cust     88.57(↑ 0.10)   87.86(↓ 0.36)   84.68(↓ 0.46)   70.67(↓ 1.88)
+                              Category
+                                            + linear cust         88.57(↑ 0.10)   86.07(↓ 1.52)   84.67(↓ 0.47)   66.04(↓ 6.51)
+                  BERT4News
+                                            + linear basis cust   88.42(↓ 0.05)   87.76(↓ 0.46)   84.63(↑ 0.51)   70.61(↓ 1.94)
+                              Description   + SBert4News          89.23(↑ 0.76)   87.51(↓ 0.71)   85.86(↑ 0.72)   71.89(↓ 0.66)
+                                            + bias basis cust
+                              Both                                88.37(↓ 0.10)   87.66(↓ 0.56)   85.05(↓ 0.09)   72.33(↓ 0.22)
+                                            + SBert4News
+
+
+
+          accuracy. In the case of the BERT models, the PhoBERT model demonstrated an
+          improvement in F1-macro by 0.13% and 1.01% for both tasks, whereas BERT4News
+          experienced a decrease in performance.
+             In short, based on the aforementioned results, we have observed that metadata
+          has a significant impact on the performance of models. For DNN models, both
+          the product category and product led to improvements in the results, with the
+          incorporation of the category alone achieving optimal results. However, for the
+August 2, 2024         0:26      main
+
+
+
+
+                    Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites             19
+
+
+          BERT models, effectiveness was only enhanced when combining the description and
+          category, while combining them separately proved to be ineffective and resulted in a
+          decrease in model accuracy. This suggests that the BERT models are optimized for
+          learning and understanding sentence semantics, thus benefiting from the inclusion
+          of product description features to better recognize and provide accurate predictions.
+
+
+          4.5. Error Analysis
+          To evaluate the effectiveness of the integrated metadata proposal method on each
+          label, we analyzed their impact when combining individual attributes and both.
+          Firstly, we chose the model that showed the highest performance improvement when
+          combined with the product category to analyze its efficiency, namely TextCNN +
+          linear basis cust. When comparing the effectiveness of incorporating the product
+          category into the spam reviews classification task, we noticed an improvement in
+          accurately predicting reviews for both labels. To provide a detailed analysis of
+          each spam type, we illustrated the confusion matrix of this model for the task of
+          identifying spam reviews in Figure 6. For this task, we observed that the labels NO-
+          SPAM and SPAM-3 both exhibited improved classification results, whereas there
+          was little significant difference observed for the remaining two labels.
+
+
+                                                                                                                  2500
+                     2458 46              278 129                            2583 24            200 104
+          no-spam
+
+
+
+
+                                                                   no-spam
+
+
+
+
+                                                            2000
+                                                                                                                  2000
+
+                      17         29        4        4                         20       29        2        3
+          spam-1
+
+
+
+
+                                                                   spam-1
+
+
+
+
+                                                            1500                                                  1500
+
+
+                     100          1       192      16       1000
+                                                                             109        1       189      10
+          spam-2
+
+
+
+
+                                                                   spam-2
+
+
+
+
+                                                                                                                  1000
+
+
+                                                            500                                                   500
+                     203         11       40       435                       182        8       33       466
+          spam-3
+
+
+
+
+                                                                   spam-3
+
+
+
+
+                     no-spam     spam-1   spam-2   spam-3                    no-spam   spam-1   spam-2   spam-3
+
+                               TextCNN original                              TextCNN + linear basis cust
+          Fig. 6: The confusion matrics of the original TextCNN model and when combining
+          product category on Task 2.
+
+
+              To observe the influence of each product category on the prediction results from
+          TextCNN + linear basis cust model compared to the original TextCNN model, we
+          conducted a statistical analysis of misclassified reviews from the original TextCNN
+          model and correctly predicted reviews on these reviews from the TextCNN + linear
+          basis model for the NO-SPAM and SPAM-3 labels, as presented in Table 7. Accord-
+          ing to Table 7, for the NO-SPAM label, the categories that yielded the best results
+          are Vehicle, Home - Life, Fashion, and Beauty. Similarly, for the SPAM-3 label,
+August 2, 2024       0:26    main
+
+
+
+
+          20     Pre-print
+
+
+          the categories that showed high effectiveness are Sport, Phone - Computer, Toy,
+          Beauty, Fashion, etc. This observation is also correlated with the statistics of label
+          distribution in each product category, where these categories tend to have higher
+          proportions of the NO-SPAM and SPAM-3 labels compared to the other labels.
+
+
+
+          Table 7: The effectiveness of integrating product category into NO-SPAM and
+          SPAM-3 labels.
+                                             NO-SPAM                             SPAM-3
+               Category
+                                    Number   Number     Efficiency Number        Number      Efficiency
+                                       of      of         (%)         of           of          (%)
+                                     wrong   correct                wrong        correct
+               Fashion                34        19         55.88        57          12         21.05
+               Electronic             75        27         36.00        15           2         13.33
+               Others                 73        33         45.21        38           8         21.05
+               Phone - Computer       51        19         37.25        28           9         32.14
+               Beauty                 37        19         51.35        20           6         30.00
+               Home - Life            44        26         59.09        24           4         16.67
+               Toy                    40        14         35.00        13           4         30.77
+               Sport                  21        7          33.33        19           7         36.84
+               Camera                 34        17         50.00         7           1         14.29
+               Vehicel                22        17         77.27        15           4         26.67
+               Footwear               5         0          00.00        11           2         18.18
+               Book                   17        8          47.06         7           0         00.00
+               Total                 453       206         45.47       254          59         23.23
+
+           Number of wrong is the count of incorrectly predicted reviews from the original TextCNN model
+           for the two labels: NO-SPAM and SPAM-3. Number of correct is the count of reviews correctly
+           predicted by the TextCNN + linear basis cust model on the previously misclassified reviews.
+
+
+
+
+              Furthermore, we also provided several examples of reviews with the NO-SPAM
+          and SPAM-3 labels, where the TextCNN model misclassified them but the TextCNN
+          + linear basis cust model predicted them correctly, as illustrated in Table 8. We can
+          see that reviews #1 and #2 belonged to the NO-SPAM label because the content
+          of the reviews was related to the products being sold. However, they mentioned the
+          Vinfast (a Vietnamese car brand) or Spirituality & Science topic (a book genre),
+          resulting in misclassification as SPAM-2, contrary to the actual label and after
+          incorporating the product categories, the model accurately predicted the correct
+          label. Conversely, reviews #3, #4, and #5 belonged to the SPAM-3 label due
+          to the presence of spam words in their content. However, the TextCNN model
+          incorrectly predicted them as the NO-SPAM label and upon incorporating the
+          product categories, the model also provided accurate predictions.
+August 2, 2024   0:26       main
+
+
+
+
+             Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites                                    21
+
+
+          Table 8: Some examples of reviews predicted by the TextCNN and TextCNN +
+          linear basis cust models.
+                                                                                                                Predicted Label
+           No.   Comment                                                             Category Actual Label
+                                                                                                             TextCNN   TextCNN +
+                                                                                                                       linear basis
+                                                                                                                           cust
+            1    Vietnamese: Mình mua trong đợt khuyến mãi tặng pin, nên             Vehicle      NO-SPAM    SPAM-2     NO-SPAM
+                 vừa dc xe chất lượng vừa rẻ luôn. Thích lắm. Mình rất khi viết
+                 đánh giá sản phẩm đã mua, nhưng vì quá ưng ý nên cũng ráng
+                 dành thời gian nhận xét, cũng như động viên công ty Vinfast
+                 phát triển thêm nhiều sản phẩm thân thiện môi trường.
+                 English: I purchased the product during a promotional period
+                 that included a free battery, so not only did got a high-quality
+                 vehicle, but it was also at a very affordable price. I like it. I
+                 hardly write reviews for products I’ve purchased, but because I
+                 am extremely satisfied, I take the time to provide feedback, as
+                 well as to encourage Vinfast company to continue developing
+                 more environmentally friendly products.
+            2    Vietnamese: Shop chuẩn bị hàng K lâu vì quá Lâu. cơ mà               Book        NO-SPAM    SPAM-2     NO-SPAM
+                 sách bọc kĩ nên sẽ tha thứ. nội dung sách hay liên quan đên
+                  Tâm Linh & Khoa Học .Đúng cái mk cần. sách đẹp, thơm. Có
+                 lẽ sẽ đặt thêm 1 cuốn sách bìa mềm nữa để dự phòg. Sách sau
+                 này k SX nữa. để con cháu sau này nó còn mở mang tầm mắt
+                 =)) sorry vì đi quá xa
+                 English: The shop took too long to prepare the order, but the
+                 book was well-packaged, so I can forgive that. The content of
+                 the book is interesting and relates to Spirituality & Science ,
+                 which is exactly what I was looking for. The book is beautifully
+                 designed and has a pleasant scent. Perhaps I will order an
+                 additional softcover book as a backup, as it seems that this
+                 book will no longer be produced. This to future generations
+                 can also broaden their horizons :)) sorry for going off-topic.
+            3    Vietnamese:        Đp        nói     nhiều        xà ngon vcl        Sport       SPAM-3     NO-SPAM     SPAM-3
+                 đjksjcjskahfjsiajcjfjfjdjfjfjdjdjdjfjdjfjfnfjjfjfj
+                 English: No need to say anything more, barbell is good
+                 đjksjcjskahfjsiajcjfjfjdjfjfjdjdjdjfjdjfjfnfjjfjfj
+            4    Vietnamese: Jsjssjdjdjdjdjsksiiejdjquaanf rất đẹp và giá            Fashion      SPAM-3     NO-SPAM     SPAM-3
+                 hợp lí em rất rất rất tráhhdhdhdjdjdjkdkdk thích luônnn
+                 đánh giá chỉ mang tính chất nhận xu nên mọi người thông
+                 cảm, nhưng quần chất lượng thật sự luôn á . Sẽ ủng hộ
+                  thêmmmmmmmmmmmmmmm
+                 English: Jsjssjdjdjdjdjsksiiejdjpants are very beautiful and
+                 reasonably priced. I really, really, really love themmm . Please
+                 understand that this review is posted to earn coins, but
+                 the quality of the pants is truly outstanding. I will con-
+                 tinue to support them. I will continue to support in the
+                  futureeeeeeeeeeeeee .
+            5    Vietnamese:           Quạt           đẹp                   ưng      Electronic   SPAM-3     SPAM-2      SPAM-3
+                 ạ pưlam Ksjsjskkskdjxncjosksnxnksksnxbsjsksn          xnxkxms
+                  xnxkxmxmx xnnxkxnxnxkxm
+                 English:       The     fan      is      beautiful      I
+                 am satisfied pưlam Ksjsjskkskdjxncjosksnxnksksnxbsjsksn
+                 xnxkxms xnxkxmxmx xnnxkxnxnxkxm
+
+
+
+
+              Next, we evaluate the performance of the product description integration
+          method, we compared the model that achieved the highest results when combining
+          this attribute, namely PhoBERT and the combination of features generated from
+          SPhoBert (PhoBERT + SPhoBert). The confusion matrices of these two models
+          for Task 2 are illustrated in Figure 7. According to Figure 7, it is evident that the
+August 2, 2024         0:26      main
+
+
+
+
+          22         Pre-print
+
+
+          number of accurately predicted reviews with the SPAM-2 labels has increased from
+          151 to 180, and there have been marginal increases in misclassification rates for the
+          remaining labels. The SPAM-2 label poses a challenge for the baseline model, and
+          the integration of product descriptions has improved the accuracy of predictions for
+          this particular label. This demonstrates that the product description contains valu-
+          able information that aids the model in better-identifying types of spam reviews.
+
+
+
+                     2700 21              105      85       2500
+                                                                             2710 11            139      51       2500
+           no-spam
+
+
+
+
+                                                                   no-spam
+                                                            2000                                                  2000
+                      16         31        0        7                         17       30        1        6
+           spam-1
+
+
+
+
+                                                            1500   spam-1                                         1500
+
+
+                      147         0       151      11                        120        1       180       8
+           spam-2
+
+
+
+
+                                                                   spam-2
+
+                                                            1000                                                  1000
+
+
+                                                            500
+                      72          5       15       597                        92        4       23       570
+                                                                                                                  500
+           spam-3
+
+
+
+
+                                                                   spam-3
+
+
+
+
+                                                            0
+                     no-spam     spam-1   spam-2   spam-3                    no-spam   spam-1   spam-2   spam-3
+
+                               PhoBERT original                                    PhoBERT + SPhoBert
+          Fig. 7: The confusion matrics of the original PhoBERT model and when combining
+          feature product description on Task 2.
+
+
+              Additionally, we compared the prediction results of some reviews from the
+          PhoBERT and PhoBERT + SPhoBert models, as shown in Table 9. According
+          to Table 9, most of the reviews that only focused on the brand, such as #1, #2,
+          #3, #5, and #6, yielded accurate predictions when product descriptions were in-
+          corporated. Moreover, it is worth noting that even brief reviews such as #3 and
+          #8 achieved accurate prediction outcomes. Only review #7 is still predicted incor-
+          rectly, possibly because it is evaluated based on the brand but contains the phrase
+          "will support further" which is commonly found in NO-SPAM reviews, causing the
+          model to overlook it. However, the effectiveness of the product description feature
+          in enhancing the prediction accuracy of type 2 spam reviews is clearly evident.
+              Finally, we compare the results when combining both product category and
+          description, although the overall improvement in accuracy was not higher compared
+          to incorporating them individually, each label showed better prediction results.
+          From the results of the error analysis, we conclude that metadata helps enhance
+          the effectiveness of classifying spam reviews, depending on specific cases, we can
+          combine either attribute or both. If expecting better results for the SPAM-2 labels,
+          combining product descriptions would be effective. If aiming for high performance
+          in NO-SPAM and SPAM-3 labels, combining product categories can be employed. If
+          a balanced improvement across labels is desired, combining both product categories
+          and descriptions would be suitable.
+August 2, 2024     0:26       main
+
+
+
+
+                Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites                                 23
+
+
+          Table 9: Some reviews are predicted by PhoBERT and PhoBERT + SPhoBert
+          models.
+                                                                                                               Predicted Label
+           No.    Comment                                                             Actual Label
+                                                                                                     PhoBERT     PhoBERT + SPhoBert
+            1     Vietnamese: "Cảm ơn Tefal về chất lượng sản phẩm và cảm               SPAM-2       NO-SPAM             SPAM-2
+                  ơn Tiki về chất lượng dịch vụ. Chất lượng sản phẩm Tefal luôn
+                  vượt qua sự mong đợi của mình".
+                  English: "Thank you Tefal for product quality and thank you
+                   Tiki for service quality. Tefal product quality always exceeds
+                  my expectations".
+            2     Vietnamese: Hàng Xiaomi luôn ngon, bổ, rẻ. Cám ơn, luôn ủng           SPAM-2       NO-SPAM             SPAM-2
+                  hộ Xiaomi và Tiki
+                  English: Xiaomi products are always great, reliable, and afford-
+                  able. Thank you, always support Xiaomi and Tiki ..
+            3     Vietnamese: giá ok, giao hàng nhanh, đóng gói kỹ                      SPAM-2       NO-SPAM             SPAM-2
+                  English: the price is good, fast delivery, and careful packaging
+            4     Vietnamese: Philips thì miễn bàn về chất lượng rồi! Thời gian         SPAM-2       NO-SPAM             SPAM-2
+                  giao hành bên Tiki cũng nhanh, hài lòng 100%
+                  English: Philips is known for its excellent quality! The delivery
+                  time with Tiki is also fast, and I am extremely satisfied.
+            5     Vietnamese: Pop It là đồ chơi xả stress theo lời con gái khoe.        SPAM-2       NO-SPAM             SPAM-2
+                  Shop giao hàng nhanh, trao đổi nhiệt tình
+                  English: Pop It is a stress reliever according to what the girl
+                  said. Shop delivered products quickly, enthusiastic exchange
+            6     Vietnamese: Cafe Highland chất lượng thì không bàn cãi rồi.           SPAM-2       NO-SPAM             SPAM-2
+                  Đóng gói cẩn thận. Giao hàng nhanh chóng.
+                  English: The quality of Highland coffee is beyond question. The
+                  packaging is careful. The delivery is fast.
+            7     Vietnamese: mình mua ở US247 Mart tin tưởng sẽ ủng hộ thêm            SPAM-2       NO-SPAM            NO-SPAM
+                  English: I purchased it at US247 Mart , I trust and will support
+                  further.
+            8     Vietnamese: giao hàng chậm                                            SPAM-2       NO-SPAM             SPAM-2
+                  English: the delivery is slow.
+
+
+
+
+          5. Conclusion
+          In this work, we have introduced the ViSpamReviews v2 corpus for the purpose of
+          integrating metadata for detecting spam reviews on Vietnamese e-commerce web-
+          sites. We have proposed an approach to incorporate metadata into this problem,
+          including two attributes: product category and product description. Through ex-
+          periments and evaluations, the results show that the PhoBERT model combined
+          with the product description feature generated from SPhoBert achieves the highest
+          performance in two tasks: spam review classification and spam review type iden-
+          tification, with F1-macro scores of 87.22% (an increase of 1.64%) and 73.49% (an
+          increase of 1.93%), respectively. This demonstrates the potential of metadata in
+          enhancing the predictive capabilities of classification models for the spam review
+          detection task.
+               Although the results have shown improved predictive efficacy on different labels,
+          the accuracy of the models still has limitations. Upon observing some reviews, we
+          noticed that the rule-based method can perform well in identifying the SPAM-3,
+          and rule sets can be constructed to pre-classify such reviews. Additionally, user
+          comments in reviews often contain many abbreviations, which partly complicates
+August 2, 2024     0:26      main
+
+
+
+
+          24     Pre-print
+
+
+          the learning process for the models. Therefore, it is necessary to build a dictionary
+          for standardizing these abbreviations. Finally, we propose combining both rule-
+          based methods and training models on normalized data, along with researching and
+          experimenting with methods to better leverage metadata information to enhance
+          the performance of the models.
+
+
+          Acknowledgments
+          This research was supported by The VNUHCM-University of Information Technol-
+          ogy’s Scientific Research Support Fund
+
+
+          References
+           1. V. A. Lai and H. T. Le, Vietnam E-commerce in 2022 (Vietnam E-commerce and
+              Digital Economy Agency, Ministry of Industry and Trade, Hanoi, Vietnam, 2022).
+           2. Y. Ni and Q. Cheng, Social media or online shopping websites: Will/how platforms in-
+              fluence ewom effectiveness, Electronic Commerce Research and Applications 64 (2024)
+              p. 101358, doi:https://doi.org/10.1016/j.elerap.2024.101358.
+           3. N. Jindal and B. Liu, Review spam detection (5 2007) 1189–1190.
+           4. W. You, L. Liu, M. Xia and C. Lv, Reputation inflation detection in a chinese c2c
+              market, Electronic Commerce Research and Applications 10(5) (2011) 510–519, doi:
+              https://doi.org/10.1016/j.elerap.2011.06.001.
+           5. S. Rao, A. K. Verma and T. Bhatia, A review on social spam detection: Challenges,
+              open issues, and future directions, Expert Systems with Applications 186 (2021) p.
+              115742, doi:https://doi.org/10.1016/j.eswa.2021.115742.
+           6. C. Van Dinh, S. T. Luu and A. G.-T. Nguyen, Detecting spam reviews on viet-
+              namese e-commerce websites, in Intelligent Information and Database Systems, eds.
+              N. T. Nguyen, T. K. Tran, U. Tukayev, T.-P. Hong, B. Trawiński and E. Szczerbicki
+              (Springer International Publishing, Cham, 2022), pp. 595–607.
+           7. J. Kim, R. K. Amplayo, K. Lee, S. Sung, M. Seo and S.-w. Hwang, Categorical meta-
+              data representation for customized text classification, Transactions of the Association
+              for Computational Linguistics 7 (2019) 201–215, doi:10.1162/tacl_a_00263.
+           8. N. Reimers and I. Gurevych, Sentence-bert: Sentence embeddings using siamese bert-
+              networks, in Proceedings of the 2019 Conference on Empirical Methods in Natural
+              Language Processing, (Association for Computational Linguistics, 11 2019).
+           9. N. Jindal and B. Liu, Opinion spam and analysis (2 2008) 219–230.
+          10. S. T. Luu, H. P. Nguyen, K. Van Nguyen and N. Luu-Thuy Nguyen, Comparison be-
+              tween traditional machine learning models and neural network models for vietnamese
+              hate speech detection (2020) 1–6, doi:10.1109/RIVF48685.2020.9140745.
+          11. H. D. Huynh, H. T.-T. Do, K. V. Nguyen and N. T.-L. Nguyen, A simple and effi-
+              cient ensemble classifier combining multiple neural network models on social media
+              datasets in Vietnamese, in Proceedings of the 34th Pacific Asia Conference on Lan-
+              guage, Information and Computation, (Association for Computational Linguistics,
+              Hanoi, Vietnam, October 2020), pp. 420–429.
+          12. R.-P. Shen, D. Liu and H.-S. Shen, Detecting review manipulation from behavior
+              deviation: A deep learning approach, Electronic Commerce Research and Applications
+              60 (2023) p. 101283, doi:https://doi.org/10.1016/j.elerap.2023.101283.
+          13. S. Hochreiter and J. Schmidhuber, Long short-term memory, Neural computation 9(8)
+              (1997) 1735–1780.
+August 2, 2024   0:26   main
+
+
+
+
+             Metadata Integration for Spam Reviews Detection on Vietnamese E-commerce Websites     25
+
+
+          14. K. Cho, B. van Merriënboer, C. Gulcehre, D. Bahdanau, F. Bougares, H. Schwenk and
+              Y. Bengio, Learning phrase representations using RNN encoder–decoder for statistical
+              machine translation, in Proceedings of the 2014 Conference on Empirical Methods in
+              Natural Language Processing (EMNLP), (Association for Computational Linguistics,
+              Doha, Qatar, October 2014), pp. 1724–1734.
+          15. Y. Kim, Convolutional neural networks for sentence classification, in Proceedings of the
+              2014 Conference on Empirical Methods in Natural Language Processing (EMNLP),
+              (Association for Computational Linguistics, Doha, Qatar, October 2014), pp. 1746–
+              1751.
+          16. L. Nguyen, K. Nguyen and N. Nguyen, SMTCE: A social media text classification
+              evaluation benchmark and BERTology models for Vietnamese, in Proceedings of the
+              36th Pacific Asia Conference on Language, Information and Computation, (De La
+              Salle University, Manila, Philippines, October 2022), pp. 282–291.
+          17. A. Rogers, O. Kovaleva and A. Rumshisky, A primer in BERTology: What we know
+              about how BERT works, Transactions of the Association for Computational Linguis-
+              tics 8 (2020) 842–866.
+          18. H. Najadat, M. A. Alzubaidi and I. Qarqaz, Detecting arabic spam reviews in social
+              networks based on classification algorithms, ACM Trans. Asian Low-Resour. Lang.
+              Inf. Process. 21 (nov 2021) doi:10.1145/3476115.
+          19. J. Cao, J. Li, M. Yin and Y. Wang, Online reviews sentiment analysis and product
+              feature improvement with deep learning, ACM Trans. Asian Low-Resour. Lang. Inf.
+              Process. (mar 2022) doi:10.1145/3522575.
+          20. S. Rayana and L. Akoglu, Collective opinion spam detection: Bridging review networks
+              and metadata, in Proceedings of the 21th ACM SIGKDD International Conference
+              on Knowledge Discovery and Data Mining, KDD ’15, (Association for Computing
+              Machinery, New York, NY, USA, 2015), p. 985–994.
+          21. G. Satia Budhi, R. Chiong, Z. Wang and S. Dhakal, Using a hybrid content-based and
+              behaviour-based featuring approach in a parallel environment to detect fake reviews,
+              Electronic Commerce Research and Applications 47 (2021) p. 101048, doi:https://doi.
+              org/10.1016/j.elerap.2021.101048.
+          22. S. Bazzaz Abkenar, M. Haghi Kashani, M. Akbari and E. Mahdipour, Learning
+              textual features for twitter spam detection: A systematic literature review, Expert
+              Systems with Applications 228 (2023) p. 120366, doi:https://doi.org/10.1016/j.eswa.
+              2023.120366.
+          23. H.-L. Sun and D.-B. Chen, A robust ranking method for online rating systems with
+              spammers by interval division, Expert Systems with Applications 235 (2024) p. 121236,
+              doi:https://doi.org/10.1016/j.eswa.2023.121236.
+          24. Y. He, Incorporating sentiment prior knowledge for weakly supervised sentiment anal-
+              ysis, ACM Transactions on Asian Language Information Processing 11 (jun 2012)
+              doi:10.1145/2184436.2184437.
+          25. R. Bai, Z. Wang, F. Kong, S. Li and G. Zhou, Neural co-training for sentiment classi-
+              fication with product attributes, ACM Trans. Asian Low-Resour. Lang. Inf. Process.
+              19 (aug 2020) doi:10.1145/3394113.
+          26. M. Li, Research on extraction of useful tourism online reviews based on multimodal
+              feature fusion, ACM Trans. Asian Low-Resour. Lang. Inf. Process. 20 (sep 2021)
+              doi:10.1145/3453694.
+          27. K. Chen, L.-C. Cheng, M.-Y. Ye and J.-H. Wang, A graph neural network approach
+              to detect original review spammers of astroturfing campaigns, Electronic Commerce
+              Research and Applications 62 (2023) p. 101326, doi:https://doi.org/10.1016/j.elerap.
+              2023.101326.
+August 2, 2024     0:26      main
+
+
+
+
+          26     Pre-print
+
+
+          28. Z. Zhang, M. Zhou, J. Wan, K. Lu, G. Chen and H. Liao, Spammer detection via
+              ranking aggregation of group behavior, Expert Systems with Applications 216 (2023)
+              p. 119454, doi:https://doi.org/10.1016/j.eswa.2022.119454.
+          29. D. Tang, B. Qin and T. Liu, Learning semantic representations of users and products
+              for document level sentiment classification, in Proceedings of the 53rd Annual Meet-
+              ing of the Association for Computational Linguistics and the 7th International Joint
+              Conference on Natural Language Processing (Volume 1: Long Papers), (Association
+              for Computational Linguistics, Beijing, China, July 2015), pp. 1014–1023.
+          30. D. Q. Nguyen and A. Tuan Nguyen, PhoBERT: Pre-trained language models for
+              Vietnamese, in Findings of the Association for Computational Linguistics: EMNLP
+              2020 , (Association for Computational Linguistics, Online, November 2020), pp. 1037–
+              1042.
+          31. T. C. Nguyen and V. N. Nguyen, Nlpbk at vlsp-2020 shared task: Compose trans-
+              former pretrained models for reliable intelligence identification on social network,
+              arXiv preprint arXiv:2101.12672 (2021).
+          32. H. Chen, M. Sun, C. Tu, Y. Lin and Z. Liu, Neural sentiment classification with user
+              and product attention (01 2016) 1650–1659, doi:10.18653/v1/D16-1171.
+          33. K. Cho, B. van Merriënboer, D. Bahdanau and Y. Bengio, On the properties of neural
+              machine translation: Encoder–decoder approaches, in Proceedings of SSST-8, Eighth
+              Workshop on Syntax, Semantics and Structure in Statistical Translation, (Association
+              for Computational Linguistics, Doha, Qatar, October 2014), pp. 103–111.
+          34. M. Sokolova and G. Lapalme, A systematic analysis of performance measures for
+              classification tasks, Information Processing & Management 45(4) (2009) 427–437,
+              doi:https://doi.org/10.1016/j.ipm.2009.03.002.
+

@@ -1,0 +1,19 @@
+\begin{table}[t]
+\caption{Main comparison on the official released split (Task 2). Both models follow the protocol in Table~\ref{tab:protocol} and differ only in the supervision objective. The last two rows are computed on seed 42 predictions, which is the seed used for the paired tests.}
+\label{tab:main}
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Model & Seeds & Accuracy & Macro-F1 \\
+\midrule
+Single-task \phobert{} & 3 & 90.74 & 75.35 \\
+Multi-task \phobert{} & 3 & 91.37 & 77.10 \\
+\midrule
+Difference & & +0.63 & +1.74 \\
+95\% bootstrap CI & & -- & [-0.61, +3.94] \\
+McNemar / bootstrap $p$ & & -- & 0.142 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

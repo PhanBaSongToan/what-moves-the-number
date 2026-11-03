@@ -1,0 +1,223 @@
+          Multi-Task PhoBERT for Vietnamese Spam-Review Type Classification:
+         Reproduction, Controlled Improvement, and Product-Disjoint Robustness
+
+                                                    Phan Bá Song Toàn
+                                     Student ID: DE200247 — TMG301 Text Mining
+                                                         Vietnam
+
+
+                                                                  A BSTRACT
+Vietnamese e-commerce review platforms contain both legitimate reviews and several types of spam reviews. This paper presents a controlled
+empirical study of Vietnamese spam-review classification using the ViSpamReviews v2 dataset and PhoBERT. First, we reproduce a single-task
+PhoBERT baseline under a fixed training protocol. Second, we propose a lightweight multi-task architecture with a shared PhoBERT encoder and
+two classification heads: a binary spam detector and a three-class spam-type classifier. Third, we evaluate generalization under a product-disjoint
+split, in which reviews from the same product are not shared across train, development, and test sets. On the official released split, the reproduced
+PhoBERT baseline obtains 76.69% Macro-F1 on the four-class task, while the multi-task model obtains 77.42%. On the more demanding
+product-disjoint split, the multi-task model obtains 90.96% accuracy and 76.73% Macro-F1. The results show a small but consistent benefit from
+multi-task supervision and a limited robustness gap between random and product-disjoint evaluation. We also report unsuccessful alternatives,
+including weighted loss and rule augmentation, to make the experimental conclusions transparent. Index Terms—Vietnamese NLP, spam review
+detection, PhoBERT, multi-task learning, e-commerce, robustness, product-disjoint evaluation.
+
+                     1    I NTRODUCTION                                      the original experiments, review text is combined with product
+Online reviews influence product discovery and purchasing deci-              category and description in several metadata configurations. The
+sions, but review platforms also contain content that is repetitive,         study reports that PhoBERT is the strongest text-oriented model
+promotional, strategically manipulated, or otherwise unreliable.             among the evaluated baselines, while metadata integration can
+Vietnamese spam-review detection is challenging because user-                improve performance in selected settings.
+generated text contains spelling variation, abbreviations, code-             2.2 PhoBERT
+switching, short comments, and product-specific language.                    PhoBERT is a RoBERTa-style pretrained language model de-
+   The paper by Tran et al. [1] studies spam-review detection on             signed for Vietnamese text [2]. It uses subword tokenization
+Vietnamese e-commerce websites and integrates review meta-                   and contextual self-attention. In this study, the pretrained en-
+data with neural text classifiers. It reports a four-class task              coder is fine-tuned rather than trained from scratch. This is
+and a binary task, and evaluates TextCNN, BiLSTM, BiGRU,                     appropriate for the course and task because the model learns
+PhoBERT, and BERT4News. Its results provide a useful ref-                    task-specific decision boundaries from labeled reviews while
+erence point, but a random review split can overestimate gen-                retaining Vietnamese linguistic knowledge from pretraining.
+eralization when reviews from the same product occur in both
+training and test data.                                                      2.3 Multi-Task Learning
+   The gap addressed here is methodological rather than purely               Multi-task learning trains related objectives with a shared repre-
+architectural: the published setting does not isolate the effect of          sentation [4]. Here, the encoder is shared by a binary head and a
+hierarchical supervision or test whether the model generalizes               spam-type head. The binary head predicts whether a review is
+to products unseen during training. This work has three objec-               spam, while the type head predicts one of the three spam types
+tives: 1) establish a reproducible PhoBERT baseline using the                for spam examples. The total loss is:
+publicly released ViSpamReviews v2 split; 2) test whether joint
+binary spam detection and spam-type classification improves                                    L = Lbin + I(ybin = 1)Ltype ,                     (1)
+the four-class task; and 3) measure robustness when products
+are held out from training. The contribution is therefore an                 where the type loss is calculated only for spam examples. At
+auditable evaluation rather than an unsupported claim of state-of-           inference time, a binary non-spam prediction becomes class 0;
+the-art performance. All primary metrics, configurations, logs,              otherwise, the type-head prediction is mapped to classes 1–3.
+checkpoints, and reports are retained as experiment artefacts.               2.4 Research Positioning
+                                                                             The proposed contribution is a controlled extension of the pub-
+     2    BACKGROUND AND R ELATED W ORK
+                                                                             lished text-classification setting. It does not claim a new pre-
+2.1 Vietnamese Spam-Review Classification                                    trained language model. Instead, it contributes (i) a hierarchical
+The original study defines two related tasks. Task 1 is binary               multi-task objective aligned with the dataset labels, (ii) a product-
+classification between non-spam and spam reviews. Task 2 is                  disjoint robustness protocol, and (iii) an auditable comparison
+four-class classification: non-spam plus three spam types. In                of interventions that did and did not improve Macro-F1.
+
+
+                                                                         1
+                                                                                                        The same protocol is used for the single-task and multi-task
+                                            Review Text Input                                           primary comparisons. No class weighting or logit adjustment is
+                                     PhoBERT Tokenizer (Max Length = 100)
+                                                                                                        used in the reproduction baseline.
+                                      Shared PhoBERT Encoder                                            4.2 Baseline
+                                       (Fine-tuned PhoBERT-base-v2)
+                                                                                                        The baseline is a standard PhoBERT sequence-classification
+                                      Contextual Representation hCLS
+                                                                                                        model. The pooled first-token representation is passed to a
+                                                                                                        linear classification head. For Task 2, the head predicts four
+         Binary Classification Head                            Spam-Type Classification Head            classes directly. This model is intentionally simple: it isolates
+           2 Outputs: Non-spam / Spam                                3 Outputs: Spam Types 1 3          the effect of the proposed multi-task supervision from changes
+                                                                                                        in preprocessing, dataset, or backbone.
+                Binary Loss bin                                      Type Loss (ybin = 1) type
+                Cross-Entropy Loss                                   Applied to Spam Reviews Only       4.3 Proposed Model
+                                                                                                        The proposed model uses one shared PhoBERT encoder fol-
+                                                                                                        lowed by two dropout-linear heads. The binary head has two
+Figure 1. Multi-task PhoBERT architecture used in the proposed
+method.                                                                                                 outputs and the type head has three outputs. During training, the
+                                                                                                        type head is supervised only on spam reviews. During predic-
+                                                                                                        tion, the binary decision gates the type prediction. This design
+            3        DATASET AND DATA AUDIT                                                             introduces a hierarchy aligned with the label structure without
+                                                                                                        changing the pretrained encoder architecture.
+3.1 Dataset
+The experiments use the publicly released sonlam1102/                                                   4.4 Controlled Alternatives
+vispamdetection2 version of ViSpamReviews v2. The re-                                                   The following variants were tested during development: class-
+lease contains the review comment, rating, product category,                                            weighted loss, focal loss, class-balanced loss, logit adjustment,
+product name, product description, sales and review-count meta-                                         threshold tuning, raw metadata fusion, category-only input,
+data, a binary label, and a four-class spam label. The released                                         description-only input, separate fusion, gated fusion, attentive
+split contains 14,306 training examples, 1,590 validation exam-                                         pooling, and rule-augmented multi-task learning. These exper-
+ples, and 3,974 test examples.                                                                          iments are treated as exploratory ablations. They are reported
+   The paper reports slightly different counts (14,284 / 1,589 /                                        to avoid selective reporting, but only the locked baseline and
+3,963). Therefore, the reproduction in this paper is explicitly an                                      multi-task comparison are used for the main claim.
+approximate reproduction of the published experiment on the                                             4.5 Evaluation Metrics
+public release, not a claim that the unavailable internal snapshot
+                                                                                                        Accuracy is reported for comparability with prior work. Macro-
+was recreated exactly.
+                                                                                                        F1 is the primary metric because it gives equal importance to
+3.2 Label Distribution                                                                                  rare spam classes:
+On the official test split, the four-class supports are 2,914, 54,
+                                                                                                                                          1 K
+310, and 696 for classes 0, 1, 2, and 3, respectively. The severe                                                             F1macro =     ∑ F1k .                    (2)
+imbalance makes Macro-F1 more informative than accuracy                                                                                   K k=1
+alone.                                                                                                  Per-class precision, recall, and F1 are also reported. Product-
+3.3 Product Leakage Audit                                                                               disjoint performance is used as a robustness measure, not as a
+To test whether random splitting may expose product-specific in-                                        replacement for the official split.
+formation, product groups were normalized from product name,                                                                    5    R ESULTS
+category, and description. The audit found overlapping nor-
+malized product groups between train and dev (996), train and                                           5.1 Published Reference and Reproduction
+test (1,456), and dev and test (921). These overlaps motivate a                                         Table 1 separates published numbers from our runs. The pub-
+secondary product-disjoint evaluation.                                                                  lished results come from the original paper and use its reported
+   For that evaluation, GroupShuffleSplit was applied to the                                            dataset version. Our reproduction uses the public release and
+normalized product key. The resulting split contains 13,985 train,                                      must therefore be interpreted within that limitation.
+1,947 development, and 3,938 test examples. Its test supports                                              The difference between the published and reproduced num-
+are 2,961, 49, 284, and 644 for classes 0–3.                                                            bers is not interpreted as a direct improvement over the paper
+                                                                                                        because the public and reported dataset snapshots differ. The
+             4         E XPERIMENTAL M ETHOD                                                            reproduction establishes an internal baseline for controlled ex-
+4.1 Reproduction Protocol                                                                               periments.
+The primary reproduction uses vinai/phobert-base-v2,                                                    5.2 Main Comparison
+PhoBERT tokenization, maximum sequence length 100, batch                                                The multi-task model improves Task 2 Macro-F1 by 0.73 per-
+size 16, AdamW optimization, encoder learning rate 10−5 ,                                               centage points relative to the reproduction baseline, although its
+classification-head learning rate 5 × 10−5 , cross-entropy loss,                                        accuracy is slightly lower. This is the preferred trade-off because
+seed 42, and early stopping based on development Macro-F1.                                              Macro-F1 better reflects performance on rare classes.
+
+
+                                                                                                    2
+Table 1. P UBLISHED REFERENCE AND OUR P HO BERT REPRODUC -                       Table 3. G ENERALIZATION TO UNSEEN PRODUCTS .
+TION .
+                                                                                 Evaluation                     Accuracy    Macro-F1
+       Setting                        Accuracy    Macro-F1
+                                                                                 Random split, multi-task        91.12%       77.42%
+       Published PhoBERT Task 1       89.23%       85.58%                        Product-disjoint, multi-task    90.96%       76.73%
+       Published PhoBERT Task 2       87.79%       71.56%
+                                                                                 Difference                     -0.16 pp     -0.69 pp
+       Our reproduction Task 1        91.55%       89.04%
+       Our reproduction Task 2        91.37%       76.69%                   Table 4. S ELECTED EXPLORATORY EXPERIMENTS ON TASK 2.
+
+Table 2. M AIN COMPARISON ON THE OFFICIAL RELEASED SPLIT.                        Variant                        Accuracy    Macro-F1
+                                                                                 Multi-task PhoBERT             91.12%        77.42%
+    Model                              Accuracy    Macro-F1                      Rule-augmented multi-task      91.02%        75.12%
+    PhoBERT reproduction                91.37%       76.69%                      Weighted type loss             90.26%        71.11%
+    Multi-task PhoBERT                  91.12%       77.42%                      Category-only control          90.46%        75.23%
+    Binary head of multi-task model     91.95%       89.51%                      Description-only control       88.78%        74.50%
+                                                                                 Separate fusion control        88.42%        74.45%
+
+
+5.3 Product-Disjoint Robustness
+                                                                                7       L IMITATIONS AND F UTURE W ORK
+The small decrease indicates that the model retains most of its
+performance when product overlap is removed. This result is               The study has several limitations. The exact internal dataset
+more informative than a random-split score alone because it               snapshot used by the original paper is unavailable, preventing
+tests whether the model relies excessively on product-specific            exact reproduction. Most experiments use a single seed, so confi-
+wording.                                                                  dence intervals and statistical significance are not yet established.
+                                                                          The product grouping key is constructed from available metadata
+5.4 Exploratory Ablations                                                 and may merge or separate products imperfectly. The minority
+The exploratory results do not support adding class weights, the          classes remain small, especially class 1, which makes its F1
+tested rule features, or the evaluated fusion variants to the main        estimate unstable. Finally, the current proposed architecture
+model. In particular, the weighted type loss reduces Macro-F1,            changes the supervision objective but does not introduce a new
+suggesting that naive reweighting may overcompensate for the              pretrained backbone.
+minority classes. These results are useful negative findings, but            The next experiments should use three to five seeds, report
+they should be rerun under the final locked protocol before being         mean and standard deviation, lock one configuration for all abla-
+presented as strict causal ablations.                                     tions, and perform systematic error analysis. Future architectural
+                                                                          extensions may include calibrated hierarchical prediction, con-
+5.5 Per-Class Analysis                                                    trastive learning across product groups, and explicit handling of
+On the product-disjoint test set, the multi-task model obtains F1         duplicated or near-duplicated reviews. Each extension must be
+scores of 0.94, 0.56, 0.67, and 0.89 for classes 0–3, respectively.       compared against the same reproduced baseline.
+Class 1 remains the hardest class because it has only 49 test
+examples. The model has high performance on the majority                            8    R EPRODUCIBILITY S TATEMENT
+non-spam class and class 3, but recall for class 1 is only 0.49.          All primary experiments use seed 42 and retain their configura-
+This confirms that aggregate accuracy alone would hide the main           tion, training log, best checkpoint, final metrics, and classifica-
+weakness.                                                                 tion report. The public dataset identifier, model checkpoint, split
+                                                                          construction, maximum sequence length, optimizer, learning
+                      6    D ISCUSSION                                    rates, batch size, and early-stopping rule are specified in this
+The main result is not that the proposed model universally beats          paper. The main comparison is restricted to the locked PhoBERT
+the original paper. Instead, the controlled study shows three de-         reproduction and the multi-task model; exploratory alternatives
+fensible findings. First, the public dataset and published dataset        are not used to replace the primary baseline.
+counts differ, so claims must distinguish reproduction from di-
+rect comparison. Second, multi-task supervision provides a                                      9    C ONCLUSION
+small Macro-F1 gain over a matched PhoBERT baseline. Third,               This paper presented a reproducible and controlled study of
+product-disjoint evaluation produces only a modest drop, sug-             Vietnamese spam-review type classification with PhoBERT. A
+gesting reasonable cross-product generalization.                          shared-encoder multi-task model improved Task 2 Macro-F1
+   The experiments also demonstrate why proposed improve-                 from 76.69% to 77.42% on the public official split and achieved
+ments should be evidence-driven. More complex fusion, rule                76.73% Macro-F1 when evaluated on unseen products. The
+augmentation, and naive class weighting did not improve the               results support multi-task supervision as a modest, practical
+main metric. A method that is simpler but stable under a stricter         improvement, while the product-disjoint experiment provides
+split is preferable to a method that produces a higher accuracy           evidence that the result is not solely caused by product overlap.
+through uncontrolled changes.                                             The study deliberately avoids claiming an absolute improvement
+
+
+                                                                      3
+    Table 5. P ER - CLASS PRODUCT- DISJOINT TEST RESULTS .
+
+         Class      Support    Precision   Recall    F1
+           0         2,961        0.94      0.95    0.94
+           1          49          0.67      0.49    0.56
+           2          284         0.61      0.75    0.67
+           3          644         0.94      0.84    0.89
+       Macro avg     3,938        0.79      0.76    0.77
+
+
+over the original publication because the released and reported
+dataset versions are not identical. The resulting evaluation is
+therefore more transparent, reproducible, and suitable as a foun-
+dation for further research.
+
+                       R EFERENCES
+[1] T. M. B. Tran et al., “Metadata Integration for Spam Re-
+    views Detection on Vietnamese E-commerce Websites,”
+    arXiv:2405.13292, 2024. [Online]. Available: https://
+    arxiv.org/abs/2405.13292
+[2] D. Q. Nguyen and A. T. Nguyen, “PhoBERT: Pre-trained
+    language models for Vietnamese,” in Findings of EMNLP,
+    2020, pp. 1037–1042.
+
+[3] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, “BERT:
+    Pre-training of deep bidirectional transformers for language
+    understanding,” in Proc. NAACL-HLT, 2019, pp. 4171–
+    4186.
+[4] R. Caruana, “Multitask learning,” Machine Learning, vol.
+    28, pp. 41–75, 1997.
+
+
+
+
+                                                                    4
+

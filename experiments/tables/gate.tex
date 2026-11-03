@@ -1,0 +1,21 @@
+\begin{table}[t]
+\caption{Decomposition of test errors into detection errors and type errors (official split, seed 42). A type-confusion error is a spam review labelled with the wrong spam type, i.e.\ the binary decision was correct.}
+\label{tab:gate}
+\centering
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Error type & Single-task & Multi-task \\
+\midrule
+Non-spam $\rightarrow$ spam & 106 & 106 \\
+Spam $\rightarrow$ non-spam & 226 & 208 \\
+Spam type confusion & 36 & 29 \\
+\quad of which Spam-1 & 5 & 7 \\
+\quad of which Spam-2 & 7 & 5 \\
+\quad of which Spam-3 & 24 & 17 \\
+\midrule
+Total errors (of 3974) & 368 & 343 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

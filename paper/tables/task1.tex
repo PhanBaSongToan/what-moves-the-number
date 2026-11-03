@@ -1,0 +1,15 @@
+\begin{table}[t]
+\caption{Task 1. The binary head is read off the multi-task model trained for Task 2, so it costs no additional training. Values are mean $\pm$ standard deviation over three seeds.}
+\label{tab:task1}
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Model & Seeds & Accuracy & Macro-F1 \\
+\midrule
+Dedicated binary model & 3 & 91.73 $\pm$ 0.43 & 89.46 $\pm$ 0.53 \\
+Multi-task binary head & 3 & 91.68 $\pm$ 0.37 & 89.15 $\pm$ 0.37 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

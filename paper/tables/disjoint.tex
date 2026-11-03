@@ -1,0 +1,17 @@
+\begin{table}[t]
+\caption{Product-disjoint evaluation (Task 2). The test set contains no product key seen in training. Values are mean $\pm$ standard deviation over three seeds and the interval is a paired bootstrap on the seed-42 predictions.}
+\label{tab:disjoint}
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Model & Seeds & Accuracy & Macro-F1 \\
+\midrule
+Single-task \phobert{} & 1 & 91.21 & 75.63 \\
+Multi-task \phobert{} & 1 & 90.73 & 75.72 \\
+Difference & & -0.48 & +0.09 \\
+95\% bootstrap CI & & -- & [-2.27, +2.57] \\
+
+\bottomrule
+\end{tabular}
+\end{table}

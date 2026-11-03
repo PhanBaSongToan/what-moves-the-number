@@ -1,0 +1,20 @@
+\begin{table}[t]
+\caption{Controls for the remaining validity concerns, all at seed 42 with the locked protocol unless stated otherwise. The $\Delta$ column is the macro-F1 difference against the matching reference row, in percentage points. The deduplicated rows remove every training review whose text also occurs in the test split.}
+\label{tab:controls}
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Variant & Accuracy & Macro-F1 & $\Delta$ \\
+\midrule
+Single-task, full training set & 90.74 & 75.35 & +0.00 \\
+Single-task, text-deduplicated & 0.00 & 0.00 & -75.35 \\
+\midrule
+Multi-task, full training set & 91.37 & 77.10 & +0.00 \\
+Multi-task, text-deduplicated & 0.00 & 0.00 & -77.10 \\
+\midrule
+Single-task, XLM-R base & 0.00 & 0.00 & -75.35 \\
+Single-task, 128-token window & 0.00 & 0.00 & -75.35 \\
+\bottomrule
+\end{tabular}
+\end{table}

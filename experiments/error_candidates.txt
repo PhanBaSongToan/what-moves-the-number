@@ -1,0 +1,104 @@
+
+##### type confusion, single-task: SPAM-1 -> SPAM-3 (n=5)
+ - true=SPAM-1 pred=SPAM-3 p=0.92 len=146
+   Xin cảm ơn cuộc đời và con người đã phát minh ra cái bọc smartkey để những người dùng smartkey có thể bọc được cái smartkey bằng cái bọc smartkey!
+ - true=SPAM-1 pred=SPAM-3 p=1.00 len=178
+   Chất lượng sản phẩm tuyệt vời, đóng gói sản phẩm rất đẹp và chắc chắn, shop phục vuh rất tốt, rất đáng tiền, thời gian giao hàng rất nhanh,hjhjhjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj
+ - true=SPAM-1 pred=SPAM-3 p=0.50 len=297
+   Hộp Carton HT Sản xuất và phân phối hộp carton đóng hàng các loại giá rẻ tại Hà Nội Quy cách: hộp carton 3 lớp sóng A,B mặt nâu, đáy mộc Freeship nội thành Hà Nội với đơn hàng >1.000 cái -------------------------------------------
+ - true=SPAM-1 pred=SPAM-3 p=0.68 len=295
+   Ví Da Nam Chất Đẹp Size Mini Nhỏ Mỏng Bỏ Túi 2 Ngăn Rộng Nhiều Ngăn Để Thẻ 1️⃣ Chính Sách Shop: 💥Phong Bụi Shop - Đẳng Cấp Thời Trang💥 ✓ Shop Gắn Liền Với Thương Hiệu Của Một Youtuber Hàng Nghìn Người Theo Dõi: Phong Bụi Troll ✓
+ - true=SPAM-1 pred=SPAM-3 p=0.96 len=83
+   Chất lượng sản phẩm tuyệt vời 5* cho shop Chất lượng sản phẩm tuyệt vời 5* cho shop
+
+##### type confusion, single-task: SPAM-2 -> SPAM-3 (n=7)
+ - true=SPAM-2 pred=SPAM-3 p=0.97 len=204
+   Shop giao đầy đủ. Mùa dịch này nên ship hơi bị lâu thôi, với cũng ngại shipper nữa, mong dịch mau qua để mọi thứ bình thường lại. Mọi người hãy nâng cao ý thức cùng nhà nước mình để mau dẹp được dịch nhé.
+ - true=SPAM-2 pred=SPAM-3 p=0.84 len=97
+   Ship khá nhanh 🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰🐰
+ - true=SPAM-2 pred=SPAM-3 p=0.97 len=92
+   Shop ơi gọi lại cho mình theo số 0856651990 để hướng dẫn t sử dụng. T k tìm thấy số của shop
+ - true=SPAM-2 pred=SPAM-3 p=0.99 len=110
+   Hình ảnh mang tính chất lấy xu, hàng giao cực kỳ nhanh, sáng đặt chiều giao, đã mua shop nhìu lầnnnnnnnnnnnnnn
+ - true=SPAM-2 pred=SPAM-3 p=1.00 len=66
+   Mua của shop lần thứ n rồi mà lần nào cũng ưng nhá mọi người mmmmm
+ - true=SPAM-2 pred=SPAM-3 p=0.70 len=92
+   Pop It là đồ chơi xả stress theo lời con gái khoe. Shop giao hàng nhanh, trao đổi nhiệt tình
+
+##### false positive: NO-SPAM -> SPAM-1 (n=13)
+ - true=NO-SPAM pred=SPAM-1 p=0.91 len=115
+   Chất lượng sản phẩm tuyệt vời đóng hàng chắc chắn giao hàng nhanh nên mua nha🤦‍♀️🙂😃😶🤤😀🤤🤧🚬🍼🤧🍼😆🚬😆🙀😆🗿🗿😆🍼😆😆😉😉😆🚬😆🚬😆🤣😆🚬😆🔟
+ - true=NO-SPAM pred=SPAM-1 p=0.76 len=58
+   Chất lượng sản phẩm tuyệt vời.Đóng gói kĩ càng............
+ - true=NO-SPAM pred=SPAM-1 p=0.55 len=130
+   Chất lượng sản phẩm tuyệt vời, rất đáng tiền ạ, nên mua nha mn Shop giao đầy đủ hàng ạ Tuy nhiên bên giao hàng cần cải thiện hơn ạ
+ - true=NO-SPAM pred=SPAM-1 p=0.98 len=78
+   Chất lượng sản phẩm tuyệt vời. Đóng gói sản phẩm đẹp. Thờ gian giao hàng nhanh
+ - true=NO-SPAM pred=SPAM-1 p=0.75 len=45
+   Chat lượng sản phẩm tuyệt vời,giao hàng nhanh
+ - true=NO-SPAM pred=SPAM-1 p=0.99 len=78
+   Chất lượng sản phẩm tuyệt vời shop giao hàng nhanh đóng gói sản phẩm chắc chắn
+
+##### missed spam: SPAM-2 -> NO-SPAM (n=115)
+ - true=SPAM-2 pred=NO-SPAM p=1.00 len=93
+   Mua bnh cái túi đựng bài cũng k bao h là đủ ấy, túi shop rẻ chất lượng chất sờ cũng thích nữa
+ - true=SPAM-2 pred=NO-SPAM p=0.66 len=107
+   Không chụp ảnh được sản phẩm nên mình lấy tạm hình khác. Đã mua của shop 3 cam rồi, vẫn sẽ ủng hộ shop tiếp
+ - true=SPAM-2 pred=NO-SPAM p=1.00 len=52
+   Giao nhanh của Tiki Now. Hàng ok, để lắp vào xem ntn
+ - true=SPAM-2 pred=NO-SPAM p=1.00 len=147
+   Lúc 10h sáng mua thì ko gửi mã về. Chiều vào thì ghi ưu đãi đã sử dụng. Mua rất nhiều nhưng hn gặp tình trạng này ko biết xử lý sao vì trừ tiền rồi
+ - true=SPAM-2 pred=NO-SPAM p=1.00 len=217
+   mình có đặt máy, các bạn nhân viên giao hàng rất nhiệt tình bưng bê, kiểm tra máy giúp mình, kèm cả tư vấn cách sử dụng, nhưng riêng bạn lắp đặt đến với thái độ không hợp tác, không mang dụng cụ lắp đặt phải mượn mình
+ - true=SPAM-2 pred=NO-SPAM p=1.00 len=65
+   giao hàng cực nhanh ạ :3 .em unbox ko cầm đt quay nên ko có ảnh ạ
+
+##### missed spam: SPAM-1 -> NO-SPAM (n=20)
+ - true=SPAM-1 pred=NO-SPAM p=0.92 len=72
+   sản phẩm tốt,chất lượng cao,chúng tôi sẽ tiếp tục tin dùng, cảm ơn shop.
+ - true=SPAM-1 pred=NO-SPAM p=0.84 len=399
+   Quý shop giao hàng nhanh. Sản phẩm có mức độ hoàn thiện tốt, gọn gàng, góc cạnh bo cong trau chuốt, cảm giác cầm nắm rất thoải mái, bảo quản dễ dàng. Tốc độ sao chép nhanh hơn rất nhiều so với USB 2.0, thuận tiện cho việc sao chép
+ - true=SPAM-1 pred=NO-SPAM p=0.94 len=145
+   chuẩn. đường may cung đẹp. giao hàng nha đóng gói kỉ. còn chất lượng thì trải nghiệm ms biet. ủng hộ shop nha mn. nếu kg tin thì ib trực tiếp mih
+ - true=SPAM-1 pred=NO-SPAM p=0.96 len=171
+   Đã nhận được hàng, shop giao nhanh, đóng gói cẩn thận, chất lượng sản phẩm tốt, hài lòng, sẽ tiếp tục ủng hộ. Chúc shop mua may bán đắt
+ - true=SPAM-1 pred=NO-SPAM p=1.00 len=88
+   Tiki gửi hàng nhanh, sản phẩm date mới, bạn ship của tiki thân thiện, đóng gói cẩn thận.
+ - true=SPAM-1 pred=NO-SPAM p=1.00 len=184
+   Phải gọi đây là lần mua hàng tuyệt nhất của mình vì shop đóng gói cực kì cẩn thận và chu đáo còn có quà tặng kèm nữa chai hương liệu nhìn sịn cực cả bột làm đông cx được rất nhiều luôn
+
+##### fixed by multi-task (n=86)
+ - true=SPAM-3 pred=SPAM-3 p=0.75 len=247
+   Kakaa ba nằm bên trái thì e bé nhét qua bên trái , sợ con móp đầu bên trái , 2 cha con nửa zường mẹ nửa zường Giờ ba nằm bên phải e bé cũng xoay về bên phải :)) mẹ lại nửa zường Làm tốt lắm con trai . Bám ba nhiều vàoooo :)) hết l
+ - true=SPAM-3 pred=SPAM-3 p=0.76 len=129
+   hàng OK rồi em vẫn đang tiếp tục vào vai một cái máy tính của e khô E Làm é é é trong é máy tính của e lại không có mã vạch é máy
+ - true=SPAM-3 pred=SPAM-3 p=0.70 len=157
+   Hàng ạ gởi bài vào vào đây ạ gửi gửi vào túi nôn trên máy Shopee đi là vừa đủ để mua cái gì cũng nên nhìn nhận lại vấn đề chính trị và tôn giáo nào cũng phải
+ - true=NO-SPAM pred=NO-SPAM p=1.00 len=70
+   Sp đjep như hình đóng gói ok đã mua nhiều lần sẽ quay lại sau mmkkkmmm
+ - true=SPAM-3 pred=SPAM-3 p=0.99 len=248
+   It's the first time I've bought it and i haven't used yet so i can't give feedback now. But i saw the ingredients have salicylic acid (bha) so i really look forward to its uses. Anw, the delivery time is very fast and you packed p
+ - true=SPAM-3 pred=SPAM-3 p=0.88 len=297
+   Mình mua hàng bên shop nhiều lần rồi, giao hàng rất nhanh You know, I usually watch films on the weekend when I have free time. I really enjoy watching many types of films, but my favourite is dramas. Twice a week, I go to the cin
+ - true=SPAM-2 pred=SPAM-2 p=0.97 len=204
+   Shop giao đầy đủ. Mùa dịch này nên ship hơi bị lâu thôi, với cũng ngại shipper nữa, mong dịch mau qua để mọi thứ bình thường lại. Mọi người hãy nâng cao ý thức cùng nhà nước mình để mau dẹp được dịch nhé.
+ - true=SPAM-3 pred=SPAM-3 p=1.00 len=199
+   bên em đang có rèm cửa che nắng chính hãng dành riêng cho xe CRV, lắp thay luôn cái bệ tì kính bên dưới ai có nhu cầu vui lòng liên hệ với em 0899168596 bút dùng k nhạy, vuốt mạnh ơi là mạnh mới được
+
+##### broken by multi-task (n=61)
+ - true=SPAM-3 pred=NO-SPAM p=0.99 len=101
+   Hàng đẹp . giao rất ok , ủng hộ ạ Hàng đẹp . giao rất ok , ủng hộ ạ Hàng đẹp . giao rất ok , ủng hộ ạ
+ - true=NO-SPAM pred=SPAM-2 p=0.88 len=258
+   Shopeemall mà làm ăn gian dối lừa đảo thế à..đặt ensure nhưng lại giao pediasure nhắn tin shop 3 ngày trời nhưng ko 1 ai hỗ trợ hay phản hồi đơn..gọi đt lên cty thì cty bảo chờ liên hệ phía bên hỗ trợ nhờ hỗ trợ lại..thế mà đợi tớ
+ - true=SPAM-3 pred=NO-SPAM p=0.74 len=34
+   Nói chung là hài lòng nhe quý dị 👍
+ - true=SPAM-2 pred=NO-SPAM p=0.96 len=78
+   Sản phẩm đẹp. Chất lượng chưa sử dụng không biết thế nào. Shop giao hàng nhanh
+ - true=SPAM-3 pred=NO-SPAM p=0.85 len=235
+   💚💚💚💚💙💙💙💙❤️❤️❤️❤️ 🍀🍀Ốp iPhone 📱 từ ip7-12prm 🌵𝟕/𝟖 𝟕𝐏𝐥𝐮𝐬/𝟖𝐏𝐥𝐮𝐬 𝐗/𝐗𝐬𝐦𝐚𝐱 𝟏𝟏/𝟏𝟏𝐏𝐫𝐨/𝐏𝐫𝐨𝐦𝐚𝐱 𝟏𝟐/𝐌𝐢𝐧𝐢/𝐏𝐫𝐨𝐌𝐚𝐱 Hàng oder china trả hàng sau 7 ngày. Chất lượng mẫu mã giá tốt luôn là tiêu chuẩn hàng đầu e lựa chọn bán cho khách iu 💜💜💜❤️❤️❤️ 💰
+ - true=NO-SPAM pred=SPAM-3 p=0.98 len=61
+   Nồi cơm điện đẹp, giao hàng cũng khá nhanhhhh, 10₫ nhaaaaaaaa
+ - true=NO-SPAM pred=SPAM-3 p=1.00 len=77
+   Sản phẩm chất lượng tốt. Gói hàng cẩn thận. Lần sau sẽ ủng hộ tiếp nhaaaaaaaa
+ - true=SPAM-2 pred=NO-SPAM p=0.99 len=81
+   Hàng giao nhanh, chất lượng dùng mới đánh giá được. Shop giao cơ lê bị nhầm size.

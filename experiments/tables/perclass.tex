@@ -1,0 +1,23 @@
+\begin{table}[t]
+\caption{Per-class results on the official test split, averaged over three seeds. Support is the number of test rows of that class.}
+\label{tab:perclass}
+\centering
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Class & Support & Precision & Recall & F1 \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Single-task}} \\
+Non-spam & 2914 & 0.926 & 0.964 & 0.944 \\
+Spam-1 & 54 & 0.527 & 0.537 & 0.532 \\
+Spam-2 & 310 & 0.715 & 0.606 & 0.656 \\
+Spam-3 & 696 & 0.934 & 0.835 & 0.882 \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Multi-task}} \\
+Non-spam & 2914 & 0.931 & 0.964 & 0.947 \\
+Spam-1 & 54 & 0.735 & 0.463 & 0.568 \\
+Spam-2 & 310 & 0.717 & 0.639 & 0.676 \\
+Spam-3 & 696 & 0.926 & 0.862 & 0.893 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,22 @@
+\begin{table}[t]
+\caption{Published reference, our locked-protocol reproduction, and a lexical reference point. Our \phobert{} rows are mean $\pm$ standard deviation over three seeds. The public release is not the published snapshot, so the first block and the rest are not a controlled comparison; the TF-IDF rows belong to a different model family and are shown only to locate the contextual model.}
+\label{tab:reproduction}
+\centering
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Setting & Accuracy & Macro-F1 \\
+\midrule
+Published \phobert{}, Task 1 \cite{vispam2024} & 89.23 & 85.58 \\
+Published \phobert{}, Task 2 \cite{vispam2024} & 87.79 & 71.56 \\
+\midrule
+This work, Task 1 & -- & -- \\
+This work, Task 2 & 90.74 & 75.35 \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Lexical reference, same release, own protocol}} \\
+TF-IDF + linear SVM, Task 1 & 84.63 & 78.80 \\
+TF-IDF + linear SVM, Task 2 & 84.40 & 66.52 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

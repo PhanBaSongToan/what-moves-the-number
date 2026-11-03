@@ -1,0 +1,22 @@
+{
+  "train_description_tokens": {
+    "mean": 359.52,
+    "median": 315,
+    "p95": 753,
+    "max": 2925
+  },
+  "train_comment_tokens": {
+    "mean": 26.19,
+    "median": 20
+  },
+  "rows_where_comment_plus_description_exceeds_100_tokens": 13516,
+  "share": 0.9448,
+  "duplicate_rows_in_train": 114,
+  "duplicate_rows_by_label": {
+    "0": 42,
+    "1": 11,
+    "2": 10,
+    "3": 51
+  },
+  "test_rows_with_duplicate_text_in_train": 38
+}

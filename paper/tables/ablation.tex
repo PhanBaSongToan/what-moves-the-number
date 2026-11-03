@@ -1,0 +1,17 @@
+\begin{table}[t]
+\caption{Interventions re-run under the locked protocol (seed 42). Reference rows repeat the seed-42 value of the corresponding main configuration so that each ablation is read against its own baseline.}
+\label{tab:ablation}
+\centering
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Variant & Accuracy & Macro-F1 \\
+\midrule
+Multi-task (reference) & 91.37 & 77.10 \\
+\quad + inverse-frequency type loss & 89.43 & 72.91 \\
+Single-task (reference) & 90.74 & 75.35 \\
+\quad + category/description text & 90.66 & 76.66 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

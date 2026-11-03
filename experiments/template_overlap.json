@@ -1,0 +1,37 @@
+{
+  "chất lượng sản phẩm tuyệt vời": {
+    "spam1_train": 0.218,
+    "spam2_train": 0.0,
+    "nonspam_train": 0.0065
+  },
+  "đóng gói sản phẩm": {
+    "spam1_train": 0.1611,
+    "spam2_train": 0.0254,
+    "nonspam_train": 0.0113
+  },
+  "giao hàng nhanh": {
+    "spam1_train": 0.1517,
+    "spam2_train": 0.2693,
+    "nonspam_train": 0.1654
+  },
+  "đáng tiền": {
+    "spam1_train": 0.0521,
+    "spam2_train": 0.0027,
+    "nonspam_train": 0.0139
+  },
+  "nên mua": {
+    "spam1_train": 0.0711,
+    "spam2_train": 0.0209,
+    "nonspam_train": 0.0595
+  },
+  "false_positives": {
+    "n": 106,
+    "share_with_template_phrase": 0.0943,
+    "share_verbatim_in_train": 0.0
+  },
+  "true_negatives": {
+    "n": 2808,
+    "share_with_template_phrase": 0.0039,
+    "share_verbatim_in_train": 0.0057
+  }
+}

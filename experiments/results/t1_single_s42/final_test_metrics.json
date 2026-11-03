@@ -1,0 +1,92 @@
+{
+  "name": "t1_single_s42",
+  "config": {
+    "name": "t1_single_s42",
+    "task": 1,
+    "method": "single",
+    "split": "official",
+    "text_mode": "comment",
+    "type_loss": "ce",
+    "seed": 42,
+    "max_len": 100,
+    "batch_size": 32,
+    "epochs": 10,
+    "encoder_lr": 1e-05,
+    "head_lr": 5e-05,
+    "patience": 3,
+    "dropout": 0.2,
+    "padding": "dynamic",
+    "precision": "bf16",
+    "extra": {}
+  },
+  "best_epoch": 2,
+  "best_dev_macro_f1": 0.8906704172526958,
+  "test_accuracy": 0.9212380473074987,
+  "test_macro_f1": 0.8996563979733184,
+  "test_weighted_f1": 0.9213668580197484,
+  "test_loss": 0.1981831078605551,
+  "test_per_class": null,
+  "confusion_matrix": [
+    [
+      2752,
+      162
+    ],
+    [
+      151,
+      909
+    ]
+  ],
+  "support": {
+    "0": 2914,
+    "1": 1060
+  },
+  "test_binary": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.2914872414798343,
+      "dev_loss": 0.2732778847592432,
+      "dev_accuracy": 0.8968553459119497,
+      "dev_macro_f1": 0.8488596660028146,
+      "seconds": 70.18097472190857
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.19856548471476085,
+      "dev_loss": 0.21957571521495123,
+      "dev_accuracy": 0.9169811320754717,
+      "dev_macro_f1": 0.8906704172526958,
+      "seconds": 70.17359709739685
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.1577088265995761,
+      "dev_loss": 0.24788230629462116,
+      "dev_accuracy": 0.9182389937106918,
+      "dev_macro_f1": 0.8886134612275691,
+      "seconds": 70.21478390693665
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.12724716253121318,
+      "dev_loss": 0.3044945449949061,
+      "dev_accuracy": 0.9182389937106918,
+      "dev_macro_f1": 0.885951321574236,
+      "seconds": 70.17723488807678
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.09850442701800992,
+      "dev_loss": 0.3249298979885548,
+      "dev_accuracy": 0.9037735849056604,
+      "dev_macro_f1": 0.8757606322536164,
+      "seconds": 70.18086051940918
+    }
+  ],
+  "train_rows": 14306,
+  "dev_rows": 1590,
+  "test_rows": 3974,
+  "device": "cuda",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 350.927451133728
+}
