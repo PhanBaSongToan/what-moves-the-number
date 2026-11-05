@@ -91,10 +91,10 @@ reference paper. The current version addresses all of that:
 | Multi-task, product-disjoint (3 seeds) | 73.98 |
 | Single-task, text-deduplicated (3 seeds) | 74.72 ± 1.34 |
 | Multi-task, text-deduplicated (3 seeds) | 77.02 ± 0.77 |
-| Single-task, near-duplicates removed | 73.66 |
-| Multi-task, near-duplicates removed | 74.46 |
-| Single-task, teencode normalised | **77.56** |
-| Multi-task, teencode normalised | 76.21 |
+| Single-task, near-duplicates removed (3 seeds) | 74.40 ± 0.80 |
+| Multi-task, near-duplicates removed (3 seeds) | 73.18 ± 2.51 |
+| Single-task, teencode normalised (3 seeds) | 75.86 ± 2.20 |
+| Multi-task, teencode normalised (3 seeds) | 74.65 ± 1.49 |
 | Fusion, shared encoder (3 seeds) | 75.98 ± 1.15 |
 | Fusion, frozen encoder (3 seeds) | 75.95 ± 0.75 |
 | Single-task, XLM-R backbone (3 seeds) | 74.63 ± 1.55 |
@@ -105,9 +105,11 @@ reference paper. The current version addresses all of that:
 | Category-disjoint, multi-task | 71.59 |
 | Seed noise (standard deviation) | 0.71 / 0.96 |
 
-The product-disjoint split is one draw: two further partitions move the flat
-model between 75.22 and 75.94 and the cascade between 73.98 and 77.37 — the
-partition alone is worth almost three points on the cascade.
+The product-disjoint split is one draw: further partitions move the flat model
+between 75.22 and 75.94 and the cascade between 73.98 and 77.37 — the partition
+alone is worth almost three points on the cascade. A second corpus (Ott et al.,
+deceptive opinion spam) gives 83.58 ± 1.64 on a random split and 80.78 ± 0.20
+when hotels are held out, i.e. the same evaluation effect on a different language.
 
 The hierarchy gives no gain on the official split, is behind on unseen products, and is
 ahead once duplicated training text is removed. Metadata never helps, the backbone matters

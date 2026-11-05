@@ -108,6 +108,48 @@ CALIBRATION = [
     dict(name="t2_multitask_cal_s42", task=2, method="multitask", split="official", seed=42),
 ]
 
+SEEDS = [
+    # text normalisation
+    dict(name="t2_single_norm_s43", task=2, method="single", split="official", seed=43, normalize=True),
+    dict(name="t2_single_norm_s44", task=2, method="single", split="official", seed=44, normalize=True),
+    dict(name="t2_multitask_norm_s43", task=2, method="multitask", split="official", seed=43, normalize=True),
+    dict(name="t2_multitask_norm_s44", task=2, method="multitask", split="official", seed=44, normalize=True),
+    # near-duplicate removal
+    dict(name="t2_single_neardup_s43", task=2, method="single", split="official", seed=43, dedupe="near"),
+    dict(name="t2_single_neardup_s44", task=2, method="single", split="official", seed=44, dedupe="near"),
+    dict(name="t2_multitask_neardup_s43", task=2, method="multitask", split="official", seed=43, dedupe="near"),
+    dict(name="t2_multitask_neardup_s44", task=2, method="multitask", split="official", seed=44, dedupe="near"),
+    # category-disjoint
+    dict(name="t2_single_category_s43", task=2, method="single", split="category_42", seed=43),
+    dict(name="t2_single_category_s44", task=2, method="single", split="category_42", seed=44),
+    dict(name="t2_multitask_category_s43", task=2, method="multitask", split="category_42", seed=43),
+    dict(name="t2_multitask_category_s44", task=2, method="multitask", split="category_42", seed=44),
+    # two further product partitions, seeds 43 and 44
+    dict(name="t2_single_disjoint123_s43", task=2, method="single", split="disjoint_123", seed=43),
+    dict(name="t2_single_disjoint123_s44", task=2, method="single", split="disjoint_123", seed=44),
+    dict(name="t2_multitask_disjoint123_s43", task=2, method="multitask", split="disjoint_123", seed=43),
+    dict(name="t2_multitask_disjoint123_s44", task=2, method="multitask", split="disjoint_123", seed=44),
+    dict(name="t2_single_disjoint456_s43", task=2, method="single", split="disjoint_456", seed=43),
+    dict(name="t2_single_disjoint456_s44", task=2, method="single", split="disjoint_456", seed=44),
+    dict(name="t2_multitask_disjoint456_s43", task=2, method="multitask", split="disjoint_456", seed=43),
+    dict(name="t2_multitask_disjoint456_s44", task=2, method="multitask", split="disjoint_456", seed=44),
+]
+
+SECOND = [
+    # Ott et al. (2011), stratified random split, binary task
+    dict(name="ott_random_s42", task=1, method="single", split="ott_random", seed=42),
+    dict(name="ott_random_s43", task=1, method="single", split="ott_random", seed=43),
+    dict(name="ott_random_s44", task=1, method="single", split="ott_random", seed=44),
+    # hotel-disjoint split
+    dict(name="ott_hotel_s42", task=1, method="single", split="ott_hotel", seed=42),
+    dict(name="ott_hotel_s43", task=1, method="single", split="ott_hotel", seed=43),
+    dict(name="ott_hotel_s44", task=1, method="single", split="ott_hotel", seed=44),
+    # verbatim duplicates removed from training
+    dict(name="ott_dedup_s42", task=1, method="single", split="ott_random", seed=42, dedupe=True),
+    dict(name="ott_dedup_s43", task=1, method="single", split="ott_random", seed=43, dedupe=True),
+    dict(name="ott_dedup_s44", task=1, method="single", split="ott_random", seed=44, dedupe=True),
+]
+
 GROUPS = {
     "main": MAIN,
     "task1": TASK1,
@@ -115,6 +157,8 @@ GROUPS = {
     "control": CONTROL,
     "ablation": ABLATION,
     "calibration": CALIBRATION,
+    "seeds": SEEDS,
+    "second": SECOND,
 }
 
-ALL = MAIN + TASK1 + SPLIT + CONTROL + ABLATION + CALIBRATION
+ALL = MAIN + TASK1 + SPLIT + CONTROL + ABLATION + CALIBRATION + SEEDS + SECOND

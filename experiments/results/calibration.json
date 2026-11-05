@@ -1,0 +1,16 @@
+{
+  "flat": {
+    "temperature": 1.687,
+    "ece_before": 7.84,
+    "ece_after": 5.31,
+    "dev_nll_before": 0.3759,
+    "dev_nll_after": 0.2951
+  },
+  "cascade": {
+    "temperature": 1.71,
+    "ece_before": 5.29,
+    "ece_after": 2.26,
+    "dev_nll_before": 0.4054,
+    "dev_nll_after": 0.3191
+  }
+}

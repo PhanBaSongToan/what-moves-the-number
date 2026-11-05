@@ -1,0 +1,16 @@
+\begin{table}[t]
+\caption{Second corpus: binary deceptive-review detection on Ott et al.\ \cite{ott2011}. The hotel-disjoint split shares no hotel name between training and test. This corpus contains no verbatim duplicate between train and test, so the third row is a repeat of the first with the same configuration and seed, and its difference measures run-to-run nondeterminism. $\Delta$ is measured against the random split.}
+\label{tab:second}
+\centering
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Variant & Seeds & Accuracy & Macro-F1 & $\Delta$ \\
+\midrule
+Ott, random & 3 & 83.65 $\pm$ 1.54 & 83.58 $\pm$ 1.64 & +0.00 \\
+Ott, hotel-out & 3 & 80.83 $\pm$ 0.18 & 80.78 $\pm$ 0.20 & -2.80 \\
+Ott, repeat run & 3 & 82.81 $\pm$ 0.54 & 82.73 $\pm$ 0.50 & -0.84 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

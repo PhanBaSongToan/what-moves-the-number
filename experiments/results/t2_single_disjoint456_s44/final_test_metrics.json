@@ -1,0 +1,179 @@
+{
+  "name": "t2_single_disjoint456_s44",
+  "config": {
+    "name": "t2_single_disjoint456_s44",
+    "task": 2,
+    "method": "single",
+    "split": "disjoint_456",
+    "text_mode": "comment",
+    "type_loss": "ce",
+    "seed": 44,
+    "max_len": 100,
+    "batch_size": 32,
+    "epochs": 10,
+    "encoder_lr": 1e-05,
+    "head_lr": 5e-05,
+    "patience": 3,
+    "dropout": 0.2,
+    "padding": "dynamic",
+    "precision": "bf16",
+    "backbone": "vinai/phobert-base-v2",
+    "dedupe": false,
+    "normalize": false,
+    "extra": {}
+  },
+  "best_epoch": 7,
+  "best_dev_macro_f1": 0.7753509158756771,
+  "test_accuracy": 0.9058284550776279,
+  "test_macro_f1": 0.7528198691018688,
+  "test_weighted_f1": 0.9083714093259776,
+  "test_loss": 0.3990056887325909,
+  "test_per_class": {
+    "0": {
+      "precision": 0.9512544802867383,
+      "recall": 0.9328646748681898,
+      "f1": 0.9419698314108251,
+      "support": 2845
+    },
+    "1": {
+      "precision": 0.4153846153846154,
+      "recall": 0.5625,
+      "f1": 0.47787610619469023,
+      "support": 48
+    },
+    "2": {
+      "precision": 0.6462395543175488,
+      "recall": 0.755700325732899,
+      "f1": 0.6966966966966968,
+      "support": 307
+    },
+    "3": {
+      "precision": 0.9034965034965035,
+      "recall": 0.8861454046639232,
+      "f1": 0.8947368421052632,
+      "support": 729
+    }
+  },
+  "confusion_matrix": [
+    [
+      2654,
+      17,
+      116,
+      58
+    ],
+    [
+      14,
+      27,
+      1,
+      6
+    ],
+    [
+      69,
+      1,
+      232,
+      5
+    ],
+    [
+      53,
+      20,
+      10,
+      646
+    ]
+  ],
+  "support": {
+    "0": 2845,
+    "1": 48,
+    "2": 307,
+    "3": 729
+  },
+  "test_binary": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.4041852600761949,
+      "dev_loss": 0.3014040453215471,
+      "dev_accuracy": 0.8986175115207373,
+      "dev_macro_f1": 0.6968152478382658,
+      "seconds": 68.90484857559204
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.2522599374339597,
+      "dev_loss": 0.30310664317941155,
+      "dev_accuracy": 0.9001536098310292,
+      "dev_macro_f1": 0.7574191086967669,
+      "seconds": 68.96544337272644
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.20957298765860533,
+      "dev_loss": 0.2961013620930089,
+      "dev_accuracy": 0.9027137736815156,
+      "dev_macro_f1": 0.7611720151484952,
+      "seconds": 68.85171055793762
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.16711439489659144,
+      "dev_loss": 0.3097824301404704,
+      "dev_accuracy": 0.9057859703020993,
+      "dev_macro_f1": 0.7697579844874033,
+      "seconds": 68.46760940551758
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.1347309190229211,
+      "dev_loss": 0.34025066288324485,
+      "dev_accuracy": 0.9037378392217101,
+      "dev_macro_f1": 0.763632652327329,
+      "seconds": 68.47154927253723
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.10702034448790172,
+      "dev_loss": 0.377498730414352,
+      "dev_accuracy": 0.901689708141321,
+      "dev_macro_f1": 0.7740354610414257,
+      "seconds": 68.42035341262817
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0814297805871436,
+      "dev_loss": 0.43879274136581853,
+      "dev_accuracy": 0.9011776753712237,
+      "dev_macro_f1": 0.7753509158756771,
+      "seconds": 68.5141031742096
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.06465379944744681,
+      "dev_loss": 0.5316394486460269,
+      "dev_accuracy": 0.8929851510496671,
+      "dev_macro_f1": 0.7398035056081012,
+      "seconds": 68.54572772979736
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.05356190727509879,
+      "dev_loss": 0.5964424001206527,
+      "dev_accuracy": 0.9027137736815156,
+      "dev_macro_f1": 0.7675219520622228,
+      "seconds": 68.44804692268372
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.04947926749170441,
+      "dev_loss": 0.5465593990978069,
+      "dev_accuracy": 0.8991295442908346,
+      "dev_macro_f1": 0.754244832520608,
+      "seconds": 68.58269834518433
+    }
+  ],
+  "train_rows": 13988,
+  "removed_train_rows": 0,
+  "dev_rows": 1953,
+  "test_rows": 3929,
+  "device": "cuda",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 686.1720907688141
+}

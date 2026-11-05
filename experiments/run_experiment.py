@@ -82,6 +82,8 @@ def load_split(split: str) -> dict[str, pd.DataFrame]:
             _CACHE[key] = _read_disjoint(
                 os.path.join(config.DATA_DIR, f"category_disjoint_split_seed{seed}")
             )
+        elif split.startswith("ott_"):
+            _CACHE[key] = _read_disjoint(os.path.join(config.DATA_DIR, "ott2011", split))
         else:
             _CACHE[key] = _read_disjoint(DEFAULT_DISJOINT())
     return _CACHE[key]

@@ -1,0 +1,171 @@
+{
+  "name": "t2_single_disjoint123_s43",
+  "config": {
+    "name": "t2_single_disjoint123_s43",
+    "task": 2,
+    "method": "single",
+    "split": "disjoint_123",
+    "text_mode": "comment",
+    "type_loss": "ce",
+    "seed": 43,
+    "max_len": 100,
+    "batch_size": 32,
+    "epochs": 10,
+    "encoder_lr": 1e-05,
+    "head_lr": 5e-05,
+    "patience": 3,
+    "dropout": 0.2,
+    "padding": "dynamic",
+    "precision": "bf16",
+    "backbone": "vinai/phobert-base-v2",
+    "dedupe": false,
+    "normalize": false,
+    "extra": {}
+  },
+  "best_epoch": 6,
+  "best_dev_macro_f1": 0.7831466952217832,
+  "test_accuracy": 0.8954511183714501,
+  "test_macro_f1": 0.7409302360816693,
+  "test_weighted_f1": 0.8978772763064579,
+  "test_loss": 0.4108355863178516,
+  "test_per_class": {
+    "0": {
+      "precision": 0.9331717451523546,
+      "recall": 0.9377174669450243,
+      "f1": 0.93543908365151,
+      "support": 2874
+    },
+    "1": {
+      "precision": 0.5116279069767442,
+      "recall": 0.4888888888888889,
+      "f1": 0.5,
+      "support": 45
+    },
+    "2": {
+      "precision": 0.5738916256157636,
+      "recall": 0.7213622291021672,
+      "f1": 0.6392318244170095,
+      "support": 323
+    },
+    "3": {
+      "precision": 0.9548286604361371,
+      "recall": 0.8317503392130258,
+      "f1": 0.8890500362581581,
+      "support": 737
+    }
+  },
+  "confusion_matrix": [
+    [
+      2695,
+      6,
+      149,
+      24
+    ],
+    [
+      14,
+      22,
+      4,
+      5
+    ],
+    [
+      88,
+      2,
+      233,
+      0
+    ],
+    [
+      91,
+      13,
+      20,
+      613
+    ]
+  ],
+  "support": {
+    "0": 2874,
+    "1": 45,
+    "2": 323,
+    "3": 737
+  },
+  "test_binary": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.4110159126157585,
+      "dev_loss": 0.32225738332342746,
+      "dev_accuracy": 0.8920398009950249,
+      "dev_macro_f1": 0.5818673052308588,
+      "seconds": 68.2991578578949
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.2679676846751282,
+      "dev_loss": 0.251757295392639,
+      "dev_accuracy": 0.9139303482587064,
+      "dev_macro_f1": 0.7233712745259171,
+      "seconds": 68.20851469039917
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.21157427963667683,
+      "dev_loss": 0.2783490612139156,
+      "dev_accuracy": 0.909452736318408,
+      "dev_macro_f1": 0.688579928526185,
+      "seconds": 68.41095495223999
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.1692418966030333,
+      "dev_loss": 0.2693931450594717,
+      "dev_accuracy": 0.9124378109452737,
+      "dev_macro_f1": 0.7633759182388276,
+      "seconds": 68.27297043800354
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.1374069041355775,
+      "dev_loss": 0.2993098262530654,
+      "dev_accuracy": 0.9119402985074627,
+      "dev_macro_f1": 0.7737547656608519,
+      "seconds": 68.31891393661499
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.10645445884089522,
+      "dev_loss": 0.36239481408204605,
+      "dev_accuracy": 0.9064676616915422,
+      "dev_macro_f1": 0.7831466952217832,
+      "seconds": 68.35542583465576
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.08661795221537369,
+      "dev_loss": 0.3932320614804083,
+      "dev_accuracy": 0.9114427860696518,
+      "dev_macro_f1": 0.7672701597584817,
+      "seconds": 68.24767327308655
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.06785988612105846,
+      "dev_loss": 0.4543846919039144,
+      "dev_accuracy": 0.9124378109452737,
+      "dev_macro_f1": 0.7609897277828861,
+      "seconds": 68.48517274856567
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.05572958906572248,
+      "dev_loss": 0.5151563634966217,
+      "dev_accuracy": 0.9114427860696518,
+      "dev_macro_f1": 0.7540905140244202,
+      "seconds": 68.49431896209717
+    }
+  ],
+  "train_rows": 13881,
+  "removed_train_rows": 0,
+  "dev_rows": 2010,
+  "test_rows": 3979,
+  "device": "cuda",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 615.0931026935577
+}

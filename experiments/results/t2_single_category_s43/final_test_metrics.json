@@ -1,0 +1,171 @@
+{
+  "name": "t2_single_category_s43",
+  "config": {
+    "name": "t2_single_category_s43",
+    "task": 2,
+    "method": "single",
+    "split": "category_42",
+    "text_mode": "comment",
+    "type_loss": "ce",
+    "seed": 43,
+    "max_len": 100,
+    "batch_size": 32,
+    "epochs": 10,
+    "encoder_lr": 1e-05,
+    "head_lr": 5e-05,
+    "patience": 3,
+    "dropout": 0.2,
+    "padding": "dynamic",
+    "precision": "bf16",
+    "backbone": "vinai/phobert-base-v2",
+    "dedupe": false,
+    "normalize": false,
+    "extra": {}
+  },
+  "best_epoch": 6,
+  "best_dev_macro_f1": 0.7302518467842138,
+  "test_accuracy": 0.9165517241379311,
+  "test_macro_f1": 0.7367132904591439,
+  "test_weighted_f1": 0.9171854725762918,
+  "test_loss": 0.3224430041991431,
+  "test_per_class": {
+    "0": {
+      "precision": 0.9544959721315045,
+      "recall": 0.9487123999134387,
+      "f1": 0.9515953983069244,
+      "support": 4621
+    },
+    "1": {
+      "precision": 0.45454545454545453,
+      "recall": 0.4878048780487805,
+      "f1": 0.4705882352941176,
+      "support": 41
+    },
+    "2": {
+      "precision": 0.6413301662707839,
+      "recall": 0.6699751861042184,
+      "f1": 0.6553398058252428,
+      "support": 403
+    },
+    "3": {
+      "precision": 0.8652291105121294,
+      "recall": 0.8734693877551021,
+      "f1": 0.8693297224102913,
+      "support": 735
+    }
+  },
+  "confusion_matrix": [
+    [
+      4384,
+      14,
+      142,
+      81
+    ],
+    [
+      13,
+      20,
+      0,
+      8
+    ],
+    [
+      121,
+      1,
+      270,
+      11
+    ],
+    [
+      75,
+      9,
+      9,
+      642
+    ]
+  ],
+  "support": {
+    "0": 4621,
+    "1": 41,
+    "2": 403,
+    "3": 735
+  },
+  "test_binary": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.44958744734361933,
+      "dev_loss": 0.32597954540836566,
+      "dev_accuracy": 0.883265306122449,
+      "dev_macro_f1": 0.6274898253040219,
+      "seconds": 57.77307868003845
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.2750704393793757,
+      "dev_loss": 0.3221665770910224,
+      "dev_accuracy": 0.8918367346938776,
+      "dev_macro_f1": 0.7094709985932774,
+      "seconds": 57.70399761199951
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.22502281825354958,
+      "dev_loss": 0.3152540667689576,
+      "dev_accuracy": 0.8922448979591837,
+      "dev_macro_f1": 0.7118888190886612,
+      "seconds": 57.924407720565796
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.17736754896103885,
+      "dev_loss": 0.37092669924911187,
+      "dev_accuracy": 0.883265306122449,
+      "dev_macro_f1": 0.6923950212467358,
+      "seconds": 57.97847938537598
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.14229556691038403,
+      "dev_loss": 0.4138011911937169,
+      "dev_accuracy": 0.8861224489795918,
+      "dev_macro_f1": 0.711356952620982,
+      "seconds": 57.84600496292114
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.10921212176249905,
+      "dev_loss": 0.4304422139148323,
+      "dev_accuracy": 0.8865306122448979,
+      "dev_macro_f1": 0.7302518467842138,
+      "seconds": 57.99315094947815
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.08611935259106539,
+      "dev_loss": 0.5240476920470899,
+      "dev_accuracy": 0.8836734693877552,
+      "dev_macro_f1": 0.7124934454029037,
+      "seconds": 57.81248331069946
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.07232447789267478,
+      "dev_loss": 0.6232711114506332,
+      "dev_accuracy": 0.866938775510204,
+      "dev_macro_f1": 0.6872712502455491,
+      "seconds": 58.14381647109985
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.05549470638612587,
+      "dev_loss": 0.7193643289196248,
+      "dev_accuracy": 0.8657142857142858,
+      "dev_macro_f1": 0.6834200047035979,
+      "seconds": 57.98061919212341
+    }
+  ],
+  "train_rows": 11620,
+  "removed_train_rows": 0,
+  "dev_rows": 2450,
+  "test_rows": 5800,
+  "device": "cuda",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 521.1560382843018
+}

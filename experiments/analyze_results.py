@@ -392,6 +392,45 @@ def split_variance(runs: dict) -> dict:
             pass
     return out
 
+
+def write_second_table(state: dict) -> None:
+    """Ott et al. (2011): random, hotel-disjoint and deduplicated."""
+    ott = state.get("ott", {})
+    if not ott:
+        return
+
+    reference = ott.get("random", {}).get("f1", 0.0)
+
+    def row(label: str, key: str) -> str:
+        entry = ott.get(key)
+        if not entry:
+            return ""
+        delta = 100 * (entry["f1"] - reference) if reference else 0.0
+        return (
+            f"{label} & {entry['n']} & {plus_minus(entry['acc'], entry['acc_sd'])} & "
+            f"{plus_minus(entry['f1'], entry['f1_sd'])} & {delta:+.2f} \\\\"
+        )
+
+    rows = [
+        "Variant & Seeds & Accuracy & Macro-F1 & $\\Delta$ \\\\",
+        "\\midrule",
+        row("Ott, random", "random"),
+        row("Ott, hotel-out", "hotel"),
+        row("Ott, repeat run", "dedup"),
+    ]
+    rows = [item for item in rows if item]
+    body = "\n".join(rows) + "\n"
+    caption = (
+        "Second corpus: binary deceptive-review detection on Ott et al.\\ \\cite{ott2011}. "
+        "The hotel-disjoint split shares no hotel name between training and test. This corpus contains no "
+        "verbatim duplicate between train and test, so the third row is a repeat of the first with the "
+        "same configuration and seed, and its difference measures run-to-run nondeterminism. "
+        "$\\Delta$ is measured against the random split."
+    )
+    with open(os.path.join(TABLES, "second.tex"), "w", encoding="utf-8") as handle:
+        handle.write(table_environment("tab:second", caption, "@{}lcccc@{}", body))
+
+
 def write_controls_table(state: dict, runs: dict) -> None:
     """Controls that address the remaining validity concerns."""
 
@@ -569,7 +608,27 @@ def write_numbers(state: dict) -> None:
         f"\\newcommand{{\\SplitSingleMin}}{{{pct(min(single_values)) if single_values else '0.0'}}}",
         f"\\newcommand{{\\SplitSingleMax}}{{{pct(max(single_values)) if single_values else '0.0'}}}",
         f"\\newcommand{{\\SplitMultiMin}}{{{pct(min(multi_values)) if multi_values else '0.0'}}}",
+        f"\\newcommand{{\\SplitSpread}}{{{state.get('split_spread', 0.0):.2f}}}",
         f"\\newcommand{{\\SplitMultiMax}}{{{pct(max(multi_values)) if multi_values else '0.0'}}}",
+        f"\\newcommand{{\\EceFlatCal}}{{{state.get('calibration_fit', {}).get('flat', {}).get('ece_after', 0.0):.1f}}}",
+        f"\\newcommand{{\\EceCascCal}}{{{state.get('calibration_fit', {}).get('cascade', {}).get('ece_after', 0.0):.1f}}}",
+        f"\\newcommand{{\\NormSingleSd}}{{{100 * state['norm_single'].get('sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\NormMultiSd}}{{{100 * state['norm_multi'].get('sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\NearSingleSd}}{{{100 * state['near_single'].get('sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\NearMultiSd}}{{{100 * state['near_multi'].get('sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\CategorySingleSd}}{{{100 * state['category_single'].get('sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\CategoryMultiSd}}{{{100 * state['category_multi'].get('sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\RepeatFlat}}{{{state.get('repeat_deltas', {}).get('flat', 0.0):.2f}}}",
+        f"\\newcommand{{\\RepeatCascade}}{{{state.get('repeat_deltas', {}).get('cascade', 0.0):.2f}}}",
+        f"\\newcommand{{\\RepeatOtt}}{{{state.get('repeat_deltas', {}).get('ott', 0.0):.2f}}}",
+        f"\\newcommand{{\\RepeatMax}}{{{max(state.get('repeat_deltas', {}).values(), default=0.0):.2f}}}",
+        f"\\newcommand{{\\OttMaxDelta}}{{{state.get('ott_max_delta', 0.0):.2f}}}",
+        f"\\newcommand{{\\OttRandomFone}}{{{pct(state.get('ott', {}).get('random', {}).get('f1', 0.0))}}}",
+        f"\\newcommand{{\\OttHotelFone}}{{{pct(state.get('ott', {}).get('hotel', {}).get('f1', 0.0))}}}",
+        f"\\newcommand{{\\OttDedupFone}}{{{pct(state.get('ott', {}).get('dedup', {}).get('f1', 0.0))}}}",
+        f"\\newcommand{{\\OttRandomSd}}{{{100 * state.get('ott', {}).get('random', {}).get('f1_sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\OttHotelSd}}{{{100 * state.get('ott', {}).get('hotel', {}).get('f1_sd', 0.0):.2f}}}",
+        f"\\newcommand{{\\OttDedupSd}}{{{100 * state.get('ott', {}).get('dedup', {}).get('f1_sd', 0.0):.2f}}}",
         f"\\newcommand{{\\EceSingleDev}}{{{100 * calibration_dev.get('single', {}).get('ece', 0.0):.1f}}}",
         f"\\newcommand{{\\EceMultiDev}}{{{100 * calibration_dev.get('multi', {}).get('ece', 0.0):.1f}}}",
         f"\\newcommand{{\\FusionAcc}}{{{pct(state['fusion']['acc'])}}}",
@@ -699,7 +758,43 @@ def main() -> None:
 
     state["multi_s42"] = single_run_metrics(runs, "t2_multitask_s42")
     state["single_s42"] = single_run_metrics(runs, "t2_single_s42")
+    ott = {}
+    for label, prefix in (("random", "ott_random_s"), ("hotel", "ott_hotel_s"),
+                          ("dedup", "ott_dedup_s")):
+        try:
+            agg = aggregate(runs, prefix)
+        except KeyError:
+            continue
+        ott[label] = {
+            "n": agg["acc"]["n"],
+            "acc": agg["acc"]["mean"], "acc_sd": agg["acc"]["sd"],
+            "f1": agg["f1"]["mean"], "f1_sd": agg["f1"]["sd"],
+        }
+    if "random" in ott:
+        reference = ott["random"]["f1"]
+        state["ott_max_delta"] = max(
+            (abs(ott[key]["f1"] - reference) for key in ("hotel", "dedup") if key in ott),
+            default=0.0,
+        ) * 100
+    state["ott"] = ott
+    calibration_fit = {}
+    if os.path.exists(os.path.join(RESULTS, "calibration.json")):
+        with open(os.path.join(RESULTS, "calibration.json"), encoding="utf-8") as handle:
+            calibration_fit = json.load(handle)
+    state["calibration_fit"] = calibration_fit
+    repeats = {}
+    for label, first, second in (
+        ("flat", "t2_single_s42", "t2_single_cal_s42"),
+        ("cascade", "t2_multitask_s42", "t2_multitask_cal_s42"),
+        ("ott", "ott_random_s42", "ott_dedup_s42"),
+    ):
+        if first in runs and second in runs:
+            repeats[label] = abs(runs[second]["test_macro_f1"] - runs[first]["test_macro_f1"]) * 100
+    state["repeat_deltas"] = repeats
     state["split_variance"] = split_variance(runs)
+    variance = state.get("split_variance", {})
+    multi_values = list(variance.get("multi", {}).values())
+    state["split_spread"] = 100 * (max(multi_values) - min(multi_values)) if multi_values else 0.0
     state["dedupe_bootstrap_single"] = (
         paired_bootstrap("t2_single_s42", "t2_single_dedup_s42")
         if {"t2_single_s42", "t2_single_dedup_s42"} <= set(runs) else {}
@@ -730,6 +825,18 @@ def main() -> None:
     state["fusion2"] = aggregate_mean(runs, "t2_fusion2_s")
     state["category_single"] = aggregate_mean(runs, "t2_single_category_s")
     state["category_multi"] = aggregate_mean(runs, "t2_multitask_category_s")
+    for label, prefix in (("norm_single", "t2_single_norm_s"),
+                          ("norm_multi", "t2_multitask_norm_s"),
+                          ("near_single", "t2_single_neardup_s"),
+                          ("near_multi", "t2_multitask_neardup_s"),
+                          ("category_single", "t2_single_category_s"),
+                          ("category_multi", "t2_multitask_category_s")):
+        try:
+            agg = aggregate(runs, prefix)
+        except KeyError:
+            continue
+        if label in state:
+            state[label]["sd"] = agg["f1"]["sd"]
     state["len128"] = aggregate_mean(runs, "t2_single_len128_s")
     state["fusion"] = aggregate_mean(runs, "t2_fusion_s")
     state["lr_single"] = aggregate_mean(runs, "t2_single_lr2_s")
@@ -777,6 +884,7 @@ def main() -> None:
     write_gate_table(state)
     write_controls_table(state, runs)
     write_effects_table(state)
+    write_second_table(state)
     plot_confusion(runs)
 
     with open(os.path.join(HERE, "summary.json"), "w", encoding="utf-8") as handle:

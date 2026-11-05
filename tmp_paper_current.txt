@@ -1,0 +1,519 @@
+                    What Moves the Number?
+            Evaluation and Encoder Choices Dominate
+            Architecture in Vietnamese Spam-Review
+                          Classification
+                            Phan Ba Song Toan, Trinh Minh Bao Tran, and Tran Quang Long
+                                                     Da Nang 550000, Vietnam
+
+
+   Abstract—Vietnamese e-commerce reviews are labelled as non-       a review cannot be both non-spam and a spam type, so a
+spam, fake review, brand-only review or non-review, and a            flat four-way classifier ignores the structure that the label set
+PhoBERT classifier already reaches the mid seventies in macro-       already encodes.
+F1 on this four-class task. Papers in this area usually report one
+number on one split and attribute the gain to the architecture.        This paper is deliberately a small, auditable study rather
+We test that attribution directly. Under one locked training         than a leaderboard entry. We ask four questions and answer
+protocol we run 53 configurations and measure how much               each with artifacts that can be re-run:
+each design choice moves macro-F1: a hierarchical multi-task
+objective, metadata fusion that encodes the product description
+in a separate pass, the backbone, the token window, the learning-      1) Reproduction. Can the published PhoBERT result be
+rate schedule, and two evaluation choices — removing training             re-obtained from the public release, and where do the
+text that also occurs verbatim in the test split, and holding             public and internal dataset snapshots diverge?
+products out of training. The architecture choices move the            2) Supervision. Does a hierarchical two-head objective,
+metric by at most a tenth of a point. The evaluation choices              which trains a binary detector and a spam-type classifier
+move it by 1.4 to 2.3 points and reverse the ranking of the two
+models, and changing the backbone costs 1.5. Seed noise alone             on a shared encoder, improve the four-class metric when
+is 0.7 to 1.0. We also report an error decomposition showing              both models share one protocol and are evaluated over
+that missed spam rather than wrong spam type dominates the                several seeds?
+remaining loss, and a quantified share of label noise in template-     3) Generalisation. How much accuracy depends on seeing
+like non-spam reviews.                                                    the same product during training, and does text-level
+   Index Terms—spam review detection, Vietnamese NLP,
+PhoBERT, multi-task learning, product-disjoint evaluation, re-
+                                                                          duplication remain a leak even after product-level split-
+producibility                                                             ting?
+                                                                       4) Sensitivity. Of all these choices, which ones actually
+                       I. INTRODUCTION                                    move the metric, and are the effects larger than seed
+                                                                          noise?
+   Reviews drive product discovery on e-commerce platforms,
+and the same incentive that makes them valuable also makes              Our contributions are: (i) an effect-size table that puts every
+them a target: sellers can post promotional text, competitors        design choice on one scale, with seed noise as the ruler,
+can post damaging text, and both can be automated. Viet-             and shows that evaluation choices outweigh architectural ones
+namese platforms add a further difficulty. User text is short,       by an order of magnitude; (ii) a documented, single-protocol
+informal, full of abbreviations and teencode, mixed with emoji,      comparison in which the only difference between the two
+and often copied verbatim between products, so a classifier can      models is the supervision objective, with three seeds, paired
+reach a respectable score by memorising templates rather than        bootstrap intervals and an exact McNemar test; (iii) a product-
+by judging content.                                                  disjoint split with an explicit leakage audit, extended by a
+   The ViSpamReviews dataset [1] and its metadata-extended           verbatim-duplicate audit that the original evaluation does not
+version [2] formalise the problem as two tasks. Task 1 is            report; (iv) a quantitative decomposition of the remaining
+binary: non-spam versus spam. Task 2 is four-class: non-spam         errors, separating spam detection from spam typing, plus a
+plus three spam types. Prior work reports PhoBERT [8] as the         measured share of label noise in template-like non-spam re-
+strongest text-only backbone, with metadata fusion improving         views; and (v) negative results for class-weighted supervision,
+results further [2]. Two properties of that evaluation limit how     naive metadata concatenation and a fusion baseline that avoids
+far the numbers can be generalised. First, the split is random       truncation altogether. We also state plainly which of our
+over reviews, so the same product can appear in training and         earlier exploratory numbers are not comparable with the ones
+test data; product-specific wording and copied templates then        reported here, because they were produced before the protocol
+inflate the score. Second, the four classes are not independent:     was locked.
+                       II. RELATED WORK                               standard remedies; [20] surveys their behaviour under deep
+A. Opinion spam and review spam detection                             learning. Because a single seed on a few thousand test rows
+                                                                      carries substantial variance, we report three seeds and use a
+   Jindal and Liu [3] introduced opinion spam as a text-
+                                                                      paired bootstrap [21] and the McNemar test [22], both of
+classification problem and showed that duplicate and near-
+                                                                      which are appropriate for comparing two classifiers on the
+duplicate reviews are a strong signal. Ott et al. [4] showed
+                                                                      same test set.
+that crowd workers can be induced to write deceptive reviews
+and that n-gram classifiers separate them from genuine ones                                  III. DATA AND AUDIT
+almost perfectly, a result that later work attributed partly to the
+construction of the positive class. Mukherjee et al. moved from       A. Tasks and labels
+single reviews to reviewer groups and to what a commercial              Table I restates the label set together with one training
+filter actually removes [5], [6], and Rayana and Akoglu [7]           example per class. The definitions follow the dataset docu-
+coupled ranking and classification. Our audit follows that            mentation: NO-SPAM is an informative review of the product;
+thread.                                                               SPAM-1 is a fake review that either damages or artificially
+B. Vietnamese review spam                                             promotes a product; SPAM-2 discusses only the brand, seller
+                                                                      or delivery service and says nothing about product quality;
+   ViSpamReviews [1] provides roughly twenty thousand an-             SPAM-3 is a non-review, typically a keyboard mash, repeated
+notated reviews from Vietnamese platforms with a strict anno-         characters or emoji. The examples show why the task is hard
+tation procedure, and defines the binary and four-class tasks         even for a human: SPAM-1 is often fluent, grammatical and
+used here. Its metadata-integration follow-up [2] adds product        positive, and is distinguishable mainly by templated phrasing.
+category and description through sentence embeddings and
+reports that PhoBERT with a description-derived S-PHOBERT             B. Released split versus published split
+embedding reaches the best scores. Our work differs in two
+ways: we evaluate a hierarchical objective rather than a richer          We use the public release of ViSpamReviews v21 . Table II
+input, and we add a product-disjoint split plus a duplicate           compares this release with the split described in [2]. The row
+audit. We treat the metadata result as a baseline to be re-           counts differ in every split (14,306 / 1,590 / 3,974 against
+checked, not as a claim to be extended.                               14,284 / 1,589 / 3,963), and so do the per-class counts on
+                                                                      the test split (2,914 / 54 / 310 / 696 against 2,911 / 54 /
+C. Vietnamese pretrained encoders                                     309 / 689). The authors’ own repository2 ships two archives,
+   PhoBERT [8] adapts the RoBERTa recipe [10] to Viet-                v1 and v2, both with 14,306 / 1,590 / 3,974 rows but with
+namese with a 135M-parameter base model and is the de facto           different test labels (2,867/61/319/727 in v1, 2,914/54/310/696
+backbone for Vietnamese sentence classification. BERT [9], its        in v2); neither matches the published 2,911/54/309/689, so the
+robustly optimised variant RoBERTa [10], and the multilingual         published split cannot be recovered from the public artefacts.
+XLM-R [11] are the usual alternatives; fine-tuning practice for       Our reproduction must therefore be read as an approximate
+text classification, including pooling and layer-wise learning        reproduction rather than an exact re-run.
+rates, is summarised in [12]. We keep the backbone fixed and             The label distribution is heavily skewed: 73.5% of training
+vary only the supervision, so the comparison does not depend          reviews are non-spam, and the rarest spam type accounts for
+on pretraining choices.                                               1.5% of training rows and 54 test rows. Under this distribution
+                                                                      accuracy is dominated by the majority class, so macro-F1 is
+D. Multi-task and hierarchical supervision                            the primary metric throughout.
+   Caruana [13] formalised multi-task learning as inductive
+transfer through a shared representation; [14] surveys the            C. Product-level leakage
+design space, and [15] shows that auxiliary tasks help natural-         Two reviews of the same product share vocabulary that has
+language understanding at scale. Hierarchical label sets are          nothing to do with spamminess: model names, sizes, seller
+handled either by a flat classifier, by a cascade of local            boilerplate. A random review split therefore leaks product
+classifiers, or by a global model that enforces the hierarchy,        identity. To measure it we normalise each row’s product
+and [16] surveys the trade-offs between the three. A cascade          name, category and description (NFKC, lower case, collapsed
+is attractive when the parent decision is easier than the             whitespace) and treat the concatenation as a product key.
+child decision, which is the case here: detecting spam is far         The release contains 1,676 distinct keys in training, 1,006 in
+easier than naming its type, and the type head only receives          development and 1,479 in test, and the keys overlap heavily:
+supervision on spam examples. We test whether that structure          996 between train and dev, 1,456 between train and test, and
+pays off, rather than assuming it.                                    921 between dev and test. Any random-split score is optimistic
+                                                                      with respect to a deployment in which new products arrive
+E. Imbalance and evaluation
+                                                                      continuously.
+  The four-class task is severely imbalanced, with the rarest
+type at about 1.5% of the training rows. Re-weighting [17],            1 https://huggingface.co/datasets/sonlam1102/vispamdetection2.
+
+focal loss [18], logit adjustment [19] and resampling are the          2 https://github.com/sonlam1102/vispamdetection
+                                                                   TABLE I
+              LABEL DEFINITIONS AND ONE VERBATIM TRAINING EXAMPLE PER CLASS. TEXT IS SHOWN AS RELEASED, WITH WHITESPACE COLLAPSED.
+
+Label       Meaning                               Training example
+NO-SPAM     informative product review            “chất liệu vải tốt mát nói chung là chất lượng phù hợp với giá tiền”
+SPAM-1      fake review: fabricated praise or     “Chất lượng sản phẩm tuyệt vời. Giao hàng cũng nhanh. Đóng gói sản phẩm OK. Nên mua
+            damage                                nhé mọi người.”
+SPAM-2      brand-, seller- or delivery-only      “sản phẩm bao bì đóng gói khá ok còn chất lượng cần thời gian kiểm chứng thêm”
+SPAM-3      non-review: mash, repetition,         “Âjskskxjxndndjsjdjskssosojsjsisossksksjdhhsjsussusjsjsjsjs”
+            emoji
+
+
+                                                                     TABLE II
+THE PUBLIC RELEASE USED HERE AGAINST THE SPLIT REPORTED IN [2]. CLASS COLUMNS ARE THE FOUR LABELS IN ORDER. VOCABULARY AND LENGTH STATISTICS ARE
+   NOT DIRECTLY COMPARABLE BETWEEN THE TWO SOURCES: THE PUBLISHED FIGURES COUNT WORDS AFTER VIETNAMESE WORD SEGMENTATION, OURS COUNT
+                 WHITESPACE-SEPARATED TOKENS, AND THE SAME REVIEW THEREFORE CONTRIBUTES FEWER UNITS IN THE PUBLISHED COLUMN.
+
+          Source                       Split    Rows      Non-spam      Spam-1      Spam-2     Spam-3     Vocabulary     Mean tokens
+          Published [2]                Train    14,284      10,490        211        1,103      2,480        17,196          17.38
+                                       Dev      1,589        1,182        17          120        270         4,414           16.92
+                                       Test     3,963        2,911        54          309        689         8,144           17.37
+          Public release (this work)   Train    14,306      10,512        211        1,103      2,480        26,651          26.19
+                                       Dev      1,590       1,183         17          120        270         6,514           25.84
+                                       Test     3,974       2,914         54          310        696         12,189          26.19
+
+
+
+D. Product-disjoint split                                                                             TABLE III
+                                                                                 LOCKED TRAINING PROTOCOL SHARED BY ALL REPORTED RUNS.
+   For the robustness experiment we rebuild the split at
+the product level. All rows are pooled and grouped by                        Item                       Value
+the normalised key; a first GroupShuffleSplit holds out
+                                                                             Encoder                    vinai/phobert‐base‐v2 (135M)
+20% of the groups as test, and a second splits the re-                       Max sequence length        100 tokens
+mainder into training and development with a 12.5% hold-                     Padding                    dynamic, per batch, multiple of 8
+out. The result contains 13,985 / 1,947 / 3,938 rows with                    Batch size                 32
+class supports 10,255/194/1,108/2,428, 1,393/39/141/374 and                  Epochs                     10, early stopping on dev macro-F1
+2,961/49/284/644. By construction no product key is shared                   Patience                   3
+                                                                             Optimizer                  AdamW, weight decay 0.01
+between splits, which we verify explicitly; the assignment                   Encoder learning rate      1 × 10−5
+is released as an index file (product_disjoint_ids.csv)                      Head learning rate         5 × 10−5
+so the split can be rebuilt without shipping three copies of                 Gradient clipping          1.0
+the data. Because the same pooling removes the original                      Precision                  bfloat16 autocast
+training/test boundary, the disjoint test set is a new sample,               Loss                       cross-entropy (binary, type)
+                                                                             Seeds                      42, 43, 44
+not a filtered version of the old one, and we therefore always
+                                                                             Hardware                   NVIDIA RTX 5050 Laptop, 8 GB
+compare models within the disjoint split rather than reading
+the difference between splits as a model property.
+                                                                         for persuasion. The effect on the aggregate metric is small,
+E. Verbatim duplication that survives product splitting                  but it matters for the claim that the disjoint split measures
+   Product-level grouping removes one leak but not the other.            generalisation to unseen products: it measures generalisation
+Some spam templates are copied across products, so a review              to unseen products, not to unseen text. We keep these rows
+can appear verbatim in both training and test data even when             and report the number instead of silently dropping them.
+no product is shared. Comparing reviews after collapsing
+whitespace, stripping and folding case, we find that 38 test                                         IV. METHOD
+rows (35 distinct texts) of the official split also occur in
+                                                                         A. Locked protocol
+training; over the whole release, 213 rows belong to duplicate
+groups and the 19,870 rows contain only 19,750 distinct texts.              Every number in Section V comes from a single script and
+In the product-disjoint split, 30 test rows still occur verbatim         a single protocol (Table III). A run is defined by its task, its
+in training. The duplicates are not spread evenly: of the 114            supervision objective, its input variant and its seed; nothing
+duplicated training rows, 51 are non-reviews (SPAM-3), against           else changes. We report the protocol in full because our earlier
+11 fake reviews and 10 brand-only reviews, which is what                 exploratory runs, made before the protocol was fixed, are not
+one expects if templates are copied for padding rather than              comparable with the numbers below.
+                                    review comment                            D. Metadata fusion baseline
+                                                                                 To test whether product metadata helps once it is not
+                            tokenizer, ≤ 100 tokens
+                                                                              truncated, we add a fusion model: the review is encoded as
+                                                                              before, the product description is encoded in a second for-
+                            shared PhoBERT encoder                            ward pass through the same encoder, the two representations
+                                                                              are concatenated, and a four-way linear head is applied to
+                   binary head                         type head              the result. Neither input is truncated. This is a faithful re-
+                  non-spam / spam                       types 1–3
+                                                                              implementation of the sentence-embedding fusion idea of [2]
+                                                                              with one deviation: we share a single encoder instead of fine-
+                         cascade: p(b=0) → class 0,
+                          else arg maxk p(t=k) + 1
+                                                                              tuning a separate sentence encoder in a first stage, so the
+                                                                              published two-stage pipeline is not reproduced, although the
+                               four-class prediction                          authors’ implementation is public. The row exists to separate
+                                                                              “metadata does not help” from “metadata was cut off”, which
+Fig. 1. The multi-task model. One shared encoder feeds a binary head and a    the concatenation ablation cannot do.
+three-way type head; the type loss is computed on spam rows only, and the
+two heads are combined by a cascade at inference. The training objective is   E. Evaluation
+given in (1).
+                                                                                 Accuracy is reported for comparability with prior work;
+  The protocol differs from our exploratory runs in three                     macro-F1 is the primary metric because it weights the four
+engineering choices: dynamic per-batch padding, a larger batch                classes equally. Unless stated otherwise every value is the
+(32 instead of 16) and bfloat16 autocast. Padding and precision               mean and standard deviation over seeds 42, 43 and 44, selected
+change compute, not the objective; the larger batch reduces the               by development macro-F1 and evaluated once on the test split.
+number of optimiser steps taken in a fixed number of epochs,                  For the headline pair we also report a paired bootstrap over
+which is one more reason not to mix the two generations of                    test rows (10,000 resamples of the macro-F1 difference) and an
+runs. A run takes about 10 minutes on the hardware above.                     exact McNemar test on the discordant predictions, since both
+                                                                              compare the two models on identical inputs [21], [22]. Per-
+B. Single-task baseline                                                       class precision, recall and F1 and the full confusion matrices
+   The baseline is the standard PhoBERT sequence-                             are stored with the predictions.
+classification model: a linear head on the first-token
+representation. For Task 2 the head has four outputs and                      F. Protocol-locked ablations
+is trained with four-way cross-entropy; for Task 1 it has                        Two interventions are re-run under the locked protocol
+two outputs. The encoder and the pooler/classifier form two                   so that they can be compared with the main pair: class-
+parameter groups with the learning rates in Table III. This                   weighted type loss, using inverse-frequency weights inside the
+model is intentionally plain: it isolates the effect of the                   multi-task objective, and metadata concatenation, in which the
+supervision objective from changes in the backbone, the data                  product category and description are appended to the review
+or the preprocessing.                                                         text for the single-task model. The metadata variant reproduces
+                                                                              the input format of the exploratory fusion experiments but not
+C. Multi-task model                                                           the sentence-embedding fusion of [2], which we did not re-
+  The proposed model shares one encoder between a binary                      implement; we therefore treat it as an ablation of an input
+head and a three-way type head, both dropout–linear with                      variant, not as a re-implementation of the published method.
+dropout 0.2. Let b ∈ {0, 1} indicate spam and t ∈ {1, 2, 3} the
+spam type. The type head is trained only on spam examples:                                              V. RESULTS
+
+                L = Lbin (b) + 1[ybin = 1] Ltype (t),                  (1)    A. Reproduction
+                                                                                Table IV places the published reference next to our locked-
+where 1[·] is the indicator function. At inference the binary                 protocol runs and a lexical reference point. Our single-task
+decision gates the type decision: a non-spam prediction be-                   PhoBERT reaches 76.10 macro-F1 on Task 2 and 89.46 on
+comes class 0, otherwise the type head’s argmax plus one is                   Task 1 (91.73 accuracy), against 71.56 and 85.58 in [2]. The
+returned. For confidence analysis we also keep the product of                 gap is positive but should not be read as an improvement
+marginals                                                                     over the original method: the two experiments use different
+  p(c=0) = p(b=0),                   p(c=k) = p(b=1) p(t=k − 1), (2)          snapshots, the public release has 11 more test rows, and our
+                                                                              protocol differs in batch size, padding and numerical precision.
+which is what a cascade assumes when the two heads are                        What the table establishes is an internal baseline measured
+treated as independent. Equation (2) is used only to inspect                  under the same conditions as every other row in this paper. The
+confidence and to build the gate-error decomposition in Sec-                  TF-IDF row calibrates expectations: unigrams and bigrams
+tion V-G; reported predictions come from the hard cascade.                    with a linear SVM reach only 66.52 macro-F1 on Task 2.
+                              TABLE IV                                                                  TABLE VI
+   PUBLISHED REFERENCE, OUR LOCKED-PROTOCOL REPRODUCTION, AND A          TASK 1. THE BINARY HEAD IS READ OFF THE MULTI-TASK MODEL TRAINED FOR
+  LEXICAL REFERENCE POINT. OUR PHOBERT ROWS ARE MEAN ± STANDARD         TASK 2, SO IT COSTS NO ADDITIONAL TRAINING. VALUES ARE MEAN ± STANDARD
+  DEVIATION OVER THREE SEEDS. THE PUBLIC RELEASE IS NOT THE PUBLISHED                           DEVIATION OVER THREE SEEDS.
+   SNAPSHOT, SO THE FIRST BLOCK AND THE REST ARE NOT A CONTROLLED
+ COMPARISON; THE TF-IDF ROWS BELONG TO A DIFFERENT MODEL FAMILY AND      Model                       Seeds       Accuracy         Macro-F1
+          ARE SHOWN ONLY TO LOCATE THE CONTEXTUAL MODEL.
+                                                                         Dedicated binary model           3    91.73 ± 0.43      89.46 ± 0.53
+ Setting                                 Accuracy       Macro-F1         Multi-task binary head           3    91.68 ± 0.37      89.15 ± 0.37
+ Published PhoBERT, Task 1 [2]             89.23          85.58
+ Published PhoBERT, Task 2 [2]             87.79          71.56                                         TABLE VII
+                                                                        PRODUCT-DISJOINT EVALUATION (TASK 2). THE TEST SET CONTAINS NO PRODUCT
+ This work, Task 1                    91.73 ± 0.43    89.46 ± 0.53      KEY SEEN IN TRAINING. VALUES ARE MEAN ± STANDARD DEVIATION OVER THREE
+ This work, Task 2                    90.89 ± 0.31    76.10 ± 0.71      SEEDS AND THE INTERVAL IS A PAIRED BOOTSTRAP ON THE SEED-42 PREDICTIONS.
+ Lexical reference, same release, own protocol
+ TF-IDF + linear SVM, Task 1           84.63              78.80          Model                      Seeds      Accuracy          Macro-F1
+ TF-IDF + linear SVM, Task 2           84.40              66.52          Single-task PhoBERT          3       90.99 ± 0.42     75.94 ± 1.02
+                                                                         Multi-task PhoBERT           3       90.67 ± 0.20     73.98 ± 1.51
+                               TABLE V                                   Difference                               -0.31             -1.96
+ MAIN COMPARISON ON THE OFFICIAL RELEASED SPLIT (TASK 2). BOTH MODELS    95% bootstrap CI                           –          [-2.23, +2.56]
+ FOLLOW THE PROTOCOL IN TABLE III AND DIFFER ONLY IN THE SUPERVISION
+  OBJECTIVE. THE LAST TWO ROWS ARE COMPUTED ON SEED 42 PREDICTIONS,
+              WHICH IS THE SEED USED FOR THE PAIRED TESTS.              macro-F1 against 89.15 for the head: a third of a point apart,
+                                                                        well inside the seed spread of either. Joint training therefore
+Model                        Seeds       Accuracy       Macro-F1        neither damages nor improves the binary decision it depends
+Single-task PhoBERT            3      90.89 ± 0.31     76.10 ± 0.71     on, while the multi-task model answers both questions in one
+Multi-task PhoBERT             3      90.87 ± 0.45     76.02 ± 0.96     forward pass.
+Difference                                 -0.03           -0.08
+95% bootstrap CI                             –        [-0.59, +3.94]    D. Product-disjoint evaluation
+McNemar / bootstrap p                        –             0.142           Table VII repeats the comparison on the product-disjoint
+                                                                        split with the same three seeds. Within this split the flat clas-
+   The public code of the original study3 makes the gap easier          sifier reaches 75.94 macro-F1 against 73.98 for the cascade,
+to read: its baseline notebook trains PhoBERT-base for two              a gap of -1.96 points in favour of the flat model, and the gap
+epochs with batch size 16 and one learning rate, while we               points the same way on two of the three seeds. Two readings
+train to convergence over five to nine. In our logs the flat            follow. First, neither model collapses when every product in
+model is 3.8 development points below its best epoch after              the test set is new, so the official-split scores are not an artefact
+two epochs, the same order as the 4.5-point gap, so training            of product overlap. Second, the advantage the cascade shows
+length explains more of it than the data does; we did not run           on one official-split seed does not survive unseen products; if
+their notebook.                                                         anything the hierarchy is the less robust of the two, which
+                                                                        is the opposite of the transfer argument usually made for
+B. Multi-task supervision
+                                                                        shared representations. We report the gap as descriptive rather
+   Table V reports the headline comparison over three seeds.            than tested, because three seeds on a new test sample cannot
+The multi-task model reaches 76.02 macro-F1 against 76.10               establish a two-point difference.
+for the baseline, so the hierarchical objective is worth -0.08
+points — less than the seed-to-seed spread of either model              E. Protocol-locked ablations
+and well inside the interval. The two models do disagree
+on individual rows: the paired bootstrap on seed 42 gives                  Table VIII reports the two interventions. Inverse-frequency
+an interval of [-0.59, +3.94] and the exact McNemar test                weighting of the type loss is clearly harmful: macro-F1 falls
+on the 147 discordant rows gives p = 0.047, which says                  to 72.91 against 77.10 for the unweighted multi-task model at
+that the models make different mistakes rather than that one            the same seed, and the loss is concentrated in the two larger
+makes fewer. That distinction is the honest summary of this             spam types, which the weights down-sample. Concatenating
+comparison, and it is the opposite of what a single-seed run            category and description is a different story: the model reaches
+of the same code suggested.                                             76.66 against 75.35 for the text-only baseline at the same seed,
+                                                                        a difference that one seed cannot resolve. That comparison is
+C. Task 1                                                               also weaker than it looks, because product descriptions in this
+  The same multi-task model exposes a binary head, so its               release have a median length of 315 whitespace tokens; with
+Task 1 score comes for free. Table VI compares it with a                the review comment placed first, 94.5% of rows exceed the
+dedicated binary classifier. The dedicated model reaches 89.46          100-token window and what survives is the comment plus a
+                                                                        truncated fragment of the description. The run therefore tests
+ 3 https://github.com/sonlam1102/vispamdetection                        concatenation under truncation, not metadata integration as
+                             TABLE VIII                                                                 TABLE X
+INTERVENTIONS RE-RUN UNDER THE LOCKED PROTOCOL (SEED 42). REFERENCE          WHICH CHOICES MOVE MACRO-F1. EVERY ∆ IS MEASURED AGAINST THE
+      ROWS REPEAT THE SEED-42 VALUE OF THE CORRESPONDING MAIN              MATCHING REFERENCE IN TABLES V–IX; THE LAST ROW IS THE SEED-TO-SEED
+ CONFIGURATION SO THAT EACH ABLATION IS READ AGAINST ITS OWN BASELINE.       STANDARD DEVIATION OF THE TWO MODELS, WHICH SETS THE SCALE FOR
+                                                                                                  JUDGING THE OTHERS.
+     Variant                               Accuracy    Macro-F1
+                                                                            Factor        Change                                  ∆ Macro-F1
+     Multi-task (reference)                 91.37        77.10
+       + inverse-frequency type loss        89.43        72.91              Supervision flat → cascade, official                      -0.08
+     Single-task (reference)                90.74        75.35                          same, text-deduplicated                       +2.30
+       + category/description text          90.66        76.66                          same, product-disjoint                        -1.96
+                                                                            Metadata    + description fusion                          -0.12
+                                                                            Backbone    PhoBERT → XLM-R                               -1.47
+                               TABLE IX                                     Window      100 → 128 tokens                              +0.39
+  EVERY CONTROL RE-RUN AGAINST ITS OWN REFERENCE UNDER THE LOCKED
+                                                                            Schedule    two-rate → single 2 × 10−5                -1.69 / -1.27
+PROTOCOL. ∆ IS THE MACRO-F1 DIFFERENCE AGAINST THE MATCHING REFERENCE
+MEAN, IN PERCENTAGE POINTS. THE DEDUPLICATED ROWS DROP EVERY TRAINING       Evaluation full → deduplicated, flat                      -1.38
+REVIEW WHOSE TEXT ALSO OCCURS IN THE TEST SPLIT; THE FUSION ROW ENCODES                 full → deduplicated, cascade                  +1.00
+ THE PRODUCT DESCRIPTION IN A SECOND FORWARD PASS AND CONCATENATES IT       Seed noise    standard deviation, flat / cascade ±0.71 / ±0.96
+  WITH THE REVIEW VECTOR, SO THE DESCRIPTION IS NO LONGER TRUNCATED.
+
+Variant                      Seeds    Accuracy      Macro-F1      ∆                                     TABLE XI
+                                                                          PER-CLASS RESULTS ON THE OFFICIAL TEST SPLIT, AVERAGED OVER THREE SEEDS.
+Single-task (reference)       3      90.89 ± 0.31 76.10 ± 0.71 +0.00                SUPPORT IS THE NUMBER OF TEST ROWS OF THAT CLASS.
+  deduplicated                3      90.14 ± 0.16 74.72 ± 1.34 -1.38
+  near-duplicates out         1          90.46        73.66    -2.44              Class         Support     Precision    Recall      F1
+  normalised text             1          90.71        77.56    +1.46
+  XLM-R base                  3      90.83 ± 0.13 74.63 ± 1.55 -1.47              Single-task
+  128 tokens                  3      90.80 ± 0.42 76.49 ± 0.46 +0.39              Non-spam        2914        0.928       0.961     0.944
+  single LR                   3      90.48 ± 0.73 74.41 ± 0.37 -1.69              Spam-1           54         0.605       0.512     0.553
+                                                                                  Spam-2           310        0.701       0.622     0.659
+Multi-task (reference)        3      90.87 ± 0.45 76.02 ± 0.96 +0.00              Spam-3           696        0.932       0.849     0.889
+ deduplicated                 3      90.75 ± 0.31 77.02 ± 0.77 +1.00
+ near-duplicates out          1          90.94        74.46    -1.56              Multi-task
+ normalised text              1          90.14        76.21    +0.19              Non-spam        2914        0.933       0.955     0.944
+ single LR                    3      90.26 ± 0.67 74.75 ± 1.65 -1.27              Spam-1           54         0.698       0.457     0.548
+                                                                                  Spam-2           310        0.668       0.645     0.655
+Fusion, shared encoder        3      90.86 ± 0.36 75.98 ± 1.15 -0.12              Spam-3           696        0.921       0.868     0.894
+Fusion, frozen encoder        3      90.76 ± 0.31 75.95 ± 0.75 -0.15
+Category-disjoint, flat       1         90.90         72.25        –
+Category-disjoint, cascade    1         91.19         71.59        –      learning rate 74.41 and 74.75. The backbone matters more
+                                                                          than the supervision objective.
+                                                                             Two evaluation-side controls remain, and they are the ones
+such. The fusion baseline of Section IV-D removes that con-
+                                                                          that matter. The product-disjoint split is a single draw from a
+found by encoding the description separately, and is discussed
+                                                                          random partition; two further partitions move the flat model to
+with the other controls.
+                                                                          75.22–75.94 and the cascade to 73.98–77.37, so the cascade’s
+F. Controls and sensitivity                                               score depends on the partition by almost three points — an
+                                                                          order of magnitude more than the hierarchy is worth. Holding
+   Table IX collects the controls, each re-run against its own            out whole product categories, so that no category in the test
+reference under the locked protocol. The leakage controls                 set appears in training, gives 72.25 and 71.59 on 5,800 test
+come first: removing the 47 training reviews that duplicate               reviews. The further the evaluation moves from the original
+a test review moves the flat model to 74.72 and the cascade               split, the lower the number and the less stable the ranking.
+to 77.02; removing 211 near-duplicates instead gives 73.66
+and 74.46. Both models lose more once near-duplicates go,
+                                                                          G. Per-class behaviour
+which says the random split is generous because templates
+are copied in slightly varied forms, not only verbatim.                      Table XI, Fig. 2 and Table XII break the official test set
+   The two input-side controls point in opposite directions.              down by class and by kind of error. The picture is not the
+Normalising teencode and chat abbreviations (ko → không,                  one a four-class problem suggests: type confusions are rare.
+sp → sản phẩm) is the only intervention that helps: 77.56 for             In the single-task model 226 spam reviews are labelled non-
+the flat model against 76.10. Metadata does not help: fusion              spam and 106 non-spam reviews are flagged as spam, against
+reaches 75.98 with a shared encoder and 75.95 with a frozen               only 36 cases in which the spam decision is right and the type
+separate encoder, against the same 76.10. Preprocessing the               is wrong; the multi-task model changes these counts to 208,
+text is worth more than adding a second modality.                         106 and 29. The loss is concentrated in the two small spam
+   The protocol controls are unremarkable by design: XLM-R                types: 41% of the 54 Spam-1 test rows and 35% of the 310
+base gives 74.63, the 128-token window 76.49, and a single                Spam-2 rows are labelled non-spam, against 11% of the 696
+                                 TABLE XII                                       the encoder or the evaluation is worth an order of magnitude
+  DECOMPOSITION OF TEST ERRORS INTO DETECTION ERRORS AND TYPE ERRORS             more than changing the supervision structure.
+    (OFFICIAL SPLIT, SEED 42). A TYPE-CONFUSION ERROR IS A SPAM REVIEW
+LABELLED WITH THE WRONG SPAM TYPE, I.E. THE BINARY DECISION WAS CORRECT.
+                                                                                                         VI. DISCUSSION
+            Error type                 Single-task      Multi-task
+            Non-spam → spam                  106              106                    The number is set by the evaluation, not by the architecture.
+            Spam → non-spam                  226              208                Table X makes the comparison explicit. On the official split
+            Spam type confusion               36               29                the two models are a tenth of a point apart; the same pair
+              of which Spam-1                  5               7
+                                                                                 is 2.3 points apart once duplicated training text is removed,
+              of which Spam-2                  7               5
+              of which Spam-3                 24               17                and 2.0 points apart when products are held out. Our own
+                                                                                 first seed told a third story — 77.10 against 75.35 — which
+            Total errors (of 3974)           368              343
+                                                                                 is what a single-split claim looks like before it is averaged.
+                                                                                 Each of these is a defensible evaluation and they disagree; a
+                  Single-task                           Multi-task               single-split comparison, including ours, should be read with
+                                                                                 that in mind.
+       NS    96    0      2      1           NS    96    0          2    1
+                                                                                     Neither head is well calibrated. Top-label expected calibra-
+                                                                                 tion error is 6.6% on the development split and 7.8% on test for
+       S1    37    54     0      9           S1    41    46         0    13
+                                                                                 the flat model, 6.0% and 5.3% for the cascade. The cascade
+True
+
+
+
+
+                                      True
+
+
+
+
+             37    0      61     2                 35    0          64   2
+                                                                                 number is the less trustworthy of the two, because its class
+       S2                                    S2
+                                                                                 probabilities are products of two marginals (Eq. (2)); neither
+       S3    13    2      2      83          S3    11    1          2    86      output should be used as a probability without recalibration
+                                                                                 [24].
+             NS    S1     S2     S3                NS    S1         S2   S3          Why the hierarchy does not pay. The cascade enforces
+                   Predicted                             Predicted               a constraint the flat classifier can learn anyway: classes 1–
+                                                                                 3 never co-occur with non-spam in the labels, and the flat
+Fig. 2. Row-normalised confusion matrices on the official test split (seed       model sees 14,306 examples from which to learn exactly that.
+42), single-task (left) and multi-task (right). Rows are true classes, columns   What the hierarchy buys is a bias towards the parent decision,
+predicted; values are percentages of the true class. NS = non-spam, S1–S3 =
+spam types.                                                                      and the error decomposition shows that the parent decision
+                                                                                 is where nearly all the loss already is — 226 missed spam
+Spam-3 rows. The binary decision is therefore the bottleneck,                    against 36 type confusions. Sharing one encoder between the
+and the type head rarely has the chance to be wrong.                             two heads does not make the harder decision easier.
+   The false positives are worth a closer look. Of the 106 non-                      Product overlap does not drive the result, and it does not
+spam reviews that the single-task model flags as spam, 9.4%                      rescue the hierarchy. The audit finds heavy product-level
+contain the phrase “chất lượng sản phẩm tuyệt vời”, which                        overlap in the official split, yet removing it costs the flat model
+occurs in 21.8% of Spam-1 training reviews but in only 0.65%                     little: 76.10 on the official split against 75.94 on the disjoint
+of non-spam training reviews; among the 2,808 non-spam                           one. The cascade degrades more, from 76.02 to 73.98. Cross-
+reviews the model gets right, 0.39% contain it. None of the                      split comparisons are not clean, because the disjoint test set is
+false positives is a verbatim copy of a training row. The model                  a new sample, but the within-split ordering is, and on unseen
+is responding to a template that genuinely indicates Spam-1 in                   products the flat model is ahead. The verbatim-duplicate count
+this dataset, and part of its false-positive rate therefore reflects             explains part of why the random split is generous to both
+annotation noise rather than a modelling mistake — which                         models.
+matters when interpreting a macro-F1 in the mid seventies.                           Negative results are part of the result. Two plausible in-
+   The two models disagree on 147 of the 3,974 test rows:                        terventions were re-run and neither helped. Inverse-frequency
+the multi-task model corrects 86 and breaks 61, a net gain                       weighting made the metric markedly worse, which is the usual
+of 25 correct predictions. The corrections are spread across                     failure mode when a re-weighting scheme is tuned for a class
+classes rather than concentrated in one, and Table XIII shows                    with 54 test rows; metadata concatenation, which we expected
+one example of each recurring pattern, including the reverse                     to hurt because of truncation, is within noise of the baseline.
+case in which the cascade reads elongated characters as a non-                   Reporting both costs a page and saves the next reader a week.
+review and mislabels an ordinary review.
+                                                                                                    VII. THREATS TO VALIDITY
+H. What moves the metric
+   Table X puts every design choice on one scale, with the                            a) Construct validity: The labels are human annotations
+seed spread as the ruler. The architectural choices sit at zero,                 of a subjective property: the boundary between fabricated
+the backbone at 1.5 points, and the evaluation choices at 1.4                    praise and genuine enthusiasm is not always observable from
+to 2.3. If the goal is a better number on this task, changing                    text alone, and our metrics inherit that noise.
+                                                                      TABLE XIII
+ REPRESENTATIVE ERRORS ON THE OFFICIAL TEST SPLIT (SEED 42). TEXT IS VERBATIM APART FROM COLLAPSED WHITESPACE AND TRUNCATION. THE MODEL COLUMN
+                                      MARKS WHICH MODEL MADE THE ERROR: S = SINGLE-TASK, M = MULTI-TASK.
+
+Model      True       Predicted    Review
+  S      No-Spam       Spam-1      “Chất lượng sản phẩm tuyệt vời. Đóng gói sản phẩm đẹp. Thời gian giao hàng nhanh”
+  S       Spam-2      No-Spam      “Giao nhanh của Tiki Now. Hàng ok, để lắp vào xem ntn”
+  S       Spam-1       Spam-3      “Chất lượng sản phẩm tuyệt vời 5* cho shop Chất lượng sản phẩm tuyệt vời 5* cho shop”
+  M       Spam-3      No-Spam      “It’s the first time I’ve bought it and i haven’t used yet so i can’t give feedback now…”
+
+
+
+     b) Internal validity: All primary runs share one hyper-                                            REFERENCES
+parameter setting; the controls in Table IX vary the token                [1] C. Van Dinh, S. T. Luu, and A. G.-T. Nguyen, “Detecting spam reviews
+window and the backbone, and neither moves the score                          on Vietnamese e-commerce websites,” in Proc. ACIIDS, 2022, pp. 595–
+materially, but a full sweep, including the learning rate, is still           607.
+                                                                          [2] C. Van Dinh and S. T. Luu, “Metadata integration for spam reviews
+out of scope. Early stopping is a second source of variance: the              detection on Vietnamese e-commerce websites,” Int. J. Asian Lang.
+development split contains only 17 Spam-1 rows, so the epoch                  Process., vol. 34, no. 1, 2024.
+that maximises development macro-F1 differs across seeds (3               [3] N. Jindal and B. Liu, “Opinion spam and analysis,” in Proc. WSDM,
+                                                                              2008, pp. 219–230.
+to 9 in our runs) and part of the seed spread is stopping noise           [4] M. Ott, Y. Choi, C. Cardie, and J. T. Hancock, “Finding deceptive
+rather than model noise.                                                      opinion spam by any stretch of the imagination,” in Proc. ACL, 2011,
+     c) External validity: The study covers one dataset, one                  pp. 309–319.
+                                                                          [5] A. Mukherjee, B. Liu, and L. Wang, “Spotting fake reviewer groups in
+language and one backbone. The product-disjoint split is a                    consumer reviews,” in Proc. WWW, 2012, pp. 191–200.
+proxy for deployment, not a simulation of it: real platforms              [6] A. Mukherjee, V. Venkataraman, B. Liu, and N. Glance, “What Yelp
+see new products, new templates and adversarial adaptation                    fake review filter might be doing?” in Proc. ICWSM, 2013.
+                                                                          [7] S. Rayana and L. Akoglu, “Collective opinion spam detection: bridging
+over time.                                                                    ranking and classification,” in Proc. KDD, 2015, pp. 985–994.
+     d) Conclusion validity: Three seeds give a coarse es-                [8] D. Q. Nguyen and A. T. Nguyen, “PhoBERT: Pre-trained language
+timate of variance, and the rarest class has 54 test rows,                    models for Vietnamese,” in Findings of EMNLP, 2020, pp. 1037–1042.
+                                                                          [9] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, “BERT: Pre-training
+so per-class numbers are reported as descriptive rather than                  of deep bidirectional transformers for language understanding,” in Proc.
+inferential.                                                                  NAACL-HLT, 2019, pp. 4171–4186.
+                                                                         [10] Y. Liu et al., “RoBERTa: A robustly optimized BERT pretraining
+                     VIII. REPRODUCIBILITY                                    approach,” arXiv:1907.11692, 2019.
+                                                                         [11] A. Conneau et al., “Unsupervised cross-lingual representation learning
+   The repository contains one script that trains every model                 at scale,” in Proc. ACL, 2020, pp. 8440–8451.
+reported here, the split construction for the product-disjoint           [12] C. Sun, X. Qiu, Y. Xu, and X. Huang, “How to fine-tune BERT for text
+evaluation, the audit scripts, and the configuration, log, metric             classification?” in Proc. CCL, 2019, pp. 194–206.
+                                                                         [13] R. Caruana, “Multitask learning,” Machine Learning, vol. 28, pp. 41–75,
+and per-row prediction files of every run. Model checkpoints                  1997.
+are not shipped, because the training script regenerates them            [14] S. Ruder, “An overview of multi-task learning in deep neural networks,”
+from the recorded configurations. Seeds, hyperparameters and                  arXiv:1706.05098, 2017.
+                                                                         [15] X. Liu, P. He, W. Chen, and J. Gao, “Multi-task deep neural networks for
+hardware are listed in Table III. Package versions are pinned                 natural language understanding,” in Proc. ACL, 2019, pp. 4487–4496.
+in requirements.txt, and every table and figure in this                  [16] C. N. Silla and A. A. Freitas, “A survey on hierarchical classification
+paper is generated from the result files by a single analysis                 across different application domains,” Data Mining and Knowledge
+                                                                              Discovery, vol. 22, pp. 31–72, 2011.
+script, so a number in the text can be traced to the run that            [17] Y. Cui, M. Jia, T.-Y. Lin, Y. Song, and S. Belongie, “Class-balanced
+produced it.                                                                  loss based on effective number of samples,” in Proc. CVPR, 2019, pp.
+                                                                              9268–9277.
+                        IX. CONCLUSION                                   [18] T.-Y. Lin, P. Goyal, R. Girshick, K. He, and P. Dollár, “Focal loss for
+                                                                              dense object detection,” in Proc. ICCV, 2017, pp. 2980–2988.
+   We revisited Vietnamese spam-review classification with a             [19] A. K. Menon, S. Jayasumana, A. S. Rawat, H. Jain, A. Veit, and
+single locked protocol, three seeds, a product-disjoint split and             S. Kumar, “Long-tail learning via logit adjustment,” in Proc. ICLR,
+                                                                              2021.
+a duplicate audit. The published result is reproducible in order         [20] J. M. Johnson and T. M. Khoshgoftaar, “Survey on deep learning with
+of magnitude but not exactly, because the public release is not               class imbalance,” J. Big Data, vol. 6, no. 27, 2019.
+the published snapshot. The hierarchical multi-task objective            [21] B. Efron, “Bootstrap methods: another look at the jackknife,” Ann.
+                                                                              Statist., vol. 7, no. 1, pp. 1–26, 1979.
+gives no measurable improvement over a flat classifier once              [22] T. G. Dietterich, “Approximate statistical tests for comparing supervised
+seeds are averaged, although the two models make systemati-                   classification learning algorithms,” Neural Computation, vol. 10, no. 7,
+cally different mistakes. Under a product-disjoint split the flat             pp. 1895–1923, 1998.
+                                                                         [23] Q. McNemar, “Note on the sampling error of the difference between
+classifier is ahead by about two points, so the hierarchy does                correlated proportions or percentages,” Psychometrika, vol. 12, no. 2,
+not buy robustness either. The error decomposition points to                  pp. 153–157, 1947.
+the binary decision, and to annotation noise in template-like            [24] C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, “On calibration of
+                                                                              modern neural networks,” in Proc. ICML, 2017, pp. 1321–1330.
+non-spam reviews, rather than to type confusion; and product-
+level splitting alone is not a clean test of generalisation.
+
