@@ -203,7 +203,7 @@ def write_main_table(state: dict) -> None:
     delta = multi["f1"] - single["f1"]
     boot = state["bootstrap"]
     ci = f"[{signed(boot['ci_low'])}, {signed(boot['ci_high'])}]" if boot else "--"
-    p_value = f"{boot['p_value']:.3f}" if boot else "--"
+    mcnemar_p = f"{state['mcnemar']['p_value']:.3f}" if boot and state.get("mcnemar") else "--"
     body = (
         "Model & Seeds & Accuracy & Macro-F1 \\\\\n\\midrule\n"
         f"Single-task \\phobert{{}} & {single['n']} & {plus_minus(single['acc'], single['acc_sd'])} & "
@@ -212,13 +212,13 @@ def write_main_table(state: dict) -> None:
         f"{plus_minus(multi['f1'], multi['f1_sd'])} \\\\\n"
         "\\midrule\n"
         f"Difference & & {signed(multi['acc'] - single['acc'])} & {signed(delta)} \\\\\n"
-        f"95\\% bootstrap CI & & -- & {ci} \\\\\n"
-        f"McNemar / bootstrap $p$ & & -- & {p_value} \\\\\n"
+        f"Seed 42 bootstrap CI & & -- & {ci} \\\\\n"
+        f"Seed 42 McNemar $p$ & & {mcnemar_p} & -- \\\\\n"
     )
     caption = (
         "Main comparison on the official released split (Task 2). Both models follow the protocol in "
-        "Table~\\ref{tab:protocol} and differ only in the supervision objective. The last two rows are "
-        "computed on seed 42 predictions, which is the seed used for the paired tests."
+        "Table~\\ref{tab:protocol}. Difference denotes hierarchical minus flat across three seeds. "
+        "The 95\\% bootstrap interval and McNemar test use seed 42 predictions."
     )
     with open(os.path.join(TABLES, "main.tex"), "w", encoding="utf-8") as handle:
         handle.write(table_environment("tab:main", caption, "@{}lccc@{}", body))
@@ -474,11 +474,9 @@ def write_controls_table(state: dict, runs: dict) -> None:
     ]
     body = "\n".join(item for item in rows if item)
     caption = (
-        "Every control re-run against its own reference under the locked protocol. $\\Delta$ is the "
-        "macro-F1 difference against the matching reference mean, in percentage points. The deduplicated "
-        "rows drop every training review whose text also occurs in the test split; the fusion row encodes "
-        "the product description in a second forward pass and concatenates it with the review vector, so "
-        "the description is no longer truncated."
+        "Controls under the locked protocol. $\\Delta$ is the macro-F1 difference against the matching "
+        "reference mean in percentage points. Exact deduplication removes training reviews that match "
+        "test text. Fusion assigns independent token windows to the review and product description."
     )
     content = (
         "\\begin{table}[t]\n"

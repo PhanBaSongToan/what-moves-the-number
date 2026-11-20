@@ -1,5 +1,5 @@
 \begin{table}[t]
-\caption{Every control re-run against its own reference under the locked protocol. $\Delta$ is the macro-F1 difference against the matching reference mean, in percentage points. The deduplicated rows drop every training review whose text also occurs in the test split; the fusion row encodes the product description in a second forward pass and concatenates it with the review vector, so the description is no longer truncated.}
+\caption{Controls under the locked protocol. $\Delta$ is the macro-F1 difference against the matching reference mean in percentage points. Exact deduplication removes training reviews that match test text. Fusion assigns independent token windows to the review and product description.}
 \label{tab:controls}
 \centering
 \small
